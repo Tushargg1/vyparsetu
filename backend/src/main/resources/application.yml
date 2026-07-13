@@ -1,0 +1,74 @@
+spring:
+  application:
+    name: vyaparsetu
+  profiles:
+    active: dev
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/vyaparsetu?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: false
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+
+server:
+  port: ${SERVER_PORT:8080}
+  servlet:
+    context-path: /
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui
+  api-docs:
+    path: /v3/api-docs
+
+app:
+  security:
+    jwt:
+      secret: ${JWT_SECRET:change-this-in-prod-please-use-a-long-random-256-bit-secret-key!!}
+      access-token-ttl-minutes: ${JWT_ACCESS_TTL:15}
+      refresh-token-ttl-days: ${JWT_REFRESH_TTL:30}
+    otp:
+      length: 6
+      ttl-minutes: 5
+      max-attempts: 5
+  features:
+    procurement:
+      enabled: false
+    whatsapp:
+      enabled: false
+  ai:
+    groq:
+      base-url: ${GROQ_BASE_URL:https://api.groq.com/openai/v1}
+      api-key: ${GROQ_API_KEY:}
+      model: ${GROQ_MODEL:llama-3.3-70b-versatile}
+      fallback-model: ${GROQ_FALLBACK_MODEL:llama-3.1-8b-instant}
+    gemini:
+      base-url: ${GEMINI_BASE_URL:https://generativelanguage.googleapis.com/v1beta}
+      api-key: ${GEMINI_API_KEY:}
+      model: ${GEMINI_MODEL:gemini-2.0-flash}
+  storage:
+    type: local
+    local-path: ${STORAGE_PATH:./storage}
+
+logging:
+  level:
+    com.vyaparsetu: INFO
+    org.flywaydb: INFO
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics

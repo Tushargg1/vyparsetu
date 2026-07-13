@@ -1,0 +1,19 @@
+spring:
+  jpa:
+    show-sql: true
+    hibernate:
+      # Flyway owns the schema in dev. Hibernate 6.5 strict validation flags the
+      # base schema's CHAR(36) uuid columns as VARCHAR mismatches, so skip validation here.
+      ddl-auto: none
+logging:
+  level:
+    com.vyaparsetu: DEBUG
+
+app:
+  features:
+    whatsapp:
+      enabled: true
+      # provider: meta            # set to 'meta' and fill the values below for real WhatsApp
+      # token: ${WA_TOKEN:}
+      # phone-number-id: ${WA_PHONE_ID:}
+      # verify-token: ${WA_VERIFY_TOKEN:}
