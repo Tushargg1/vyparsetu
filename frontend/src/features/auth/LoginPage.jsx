@@ -174,14 +174,16 @@ export default function LoginPage() {
               </button>
             </div>
 
-            <div className="mt-lg pt-md border-t border-outline-variant">
-              <p className="text-label-sm text-on-surface-variant mb-sm text-center">Quick test login (dev)</p>
-              <div className="grid grid-cols-3 gap-sm">
-                <button onClick={() => devLogin('RETAILER')} disabled={loading} className="py-2 rounded-xl border border-outline-variant text-label-md hover:bg-surface-container disabled:opacity-60">Retailer</button>
-                <button onClick={() => devLogin('SUPPLIER')} disabled={loading} className="py-2 rounded-xl border border-outline-variant text-label-md hover:bg-surface-container disabled:opacity-60">Distributor</button>
-                <button onClick={() => devLogin('ADMIN')} disabled={loading} className="py-2 rounded-xl border border-outline-variant text-label-md hover:bg-surface-container disabled:opacity-60">Admin</button>
+            {import.meta.env.DEV && (
+              <div className="mt-lg pt-md border-t border-outline-variant">
+                <p className="text-label-sm text-on-surface-variant mb-sm text-center">Quick test login (dev)</p>
+                <div className="grid grid-cols-3 gap-sm">
+                  <button onClick={() => devLogin('RETAILER')} disabled={loading} className="py-2 rounded-xl border border-outline-variant text-label-md hover:bg-surface-container disabled:opacity-60">Retailer</button>
+                  <button onClick={() => devLogin('SUPPLIER')} disabled={loading} className="py-2 rounded-xl border border-outline-variant text-label-md hover:bg-surface-container disabled:opacity-60">Distributor</button>
+                  <button onClick={() => devLogin('ADMIN')} disabled={loading} className="py-2 rounded-xl border border-outline-variant text-label-md hover:bg-surface-container disabled:opacity-60">Admin</button>
+                </div>
               </div>
-            </div>
+            )}
           </>
         ) : (
           <div className="flex flex-col gap-md">

@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { authApi } from '../../lib/api';
 import { useAuthStore } from '../../stores/authStore';
 import { useDistributor } from '../../hooks/useShop';
 import Icon from '../../components/Icon';
@@ -17,8 +18,19 @@ function Row({ icon, label, onClick }) {
 
 export default function MorePage() {
   const navigate = useNavigate();
-  const { user, clearAuth } = useAuthStore();
+  const { user, refreshToken, clearAuth } = useAuthStore();
   const distQ = useDistributor();
+
+  const logout = async () => {
+    try {
+      if (refreshToken) await authApi.logout(refreshToken);
+    } catch {
+      // The local session must still end if the token is already invalid or the API is unavailable.
+    } finally {
+      clearAuth();
+      navigate('/login', { replace: true });
+    }
+  };
 
   return (
     <div className="space-y-md">
@@ -43,7 +55,7 @@ export default function MorePage() {
       </div>
 
       <button
-        onClick={() => { clearAuth(); navigate('/login'); }}
+        onClick={logout}
         className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl border-2 border-error text-error font-bold mt-lg"
       >
         <Icon name="logout" /> Logout

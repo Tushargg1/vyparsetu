@@ -52,7 +52,7 @@ import java.util.Set;
  * without OTP so the UI test-login buttons work instantly.
  */
 @Service
-@Profile("!prod")
+@Profile("dev")
 public class DevSeedService {
 
     private static final String TEST_INVITE_CODE = "VS-TEST0001";

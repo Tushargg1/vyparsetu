@@ -10,14 +10,13 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * DEV ONLY (non-prod). Test-login endpoints used by the UI "Quick test login"
- * buttons. This bean is not created under the prod profile, so the endpoint
- * returns 404 in production.
+ * DEV ONLY. Test-login endpoints used by the UI "Quick test login"
+ * buttons. This bean only exists when the dev profile is explicitly active.
  */
 @RestController
 @RequestMapping("/api/v1/auth/dev-login")
-@Tag(name = "Dev", description = "Test logins (non-production only)")
-@Profile("!prod")
+@Tag(name = "Dev", description = "Test logins (development only)")
+@Profile("dev")
 public class DevController {
 
     private final DevSeedService devSeedService;

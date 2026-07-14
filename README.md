@@ -68,9 +68,9 @@ docker compose up --build
 Start MySQL (or `docker compose up mysql`), then:
 
 ```bash
-# backend
+# backend (the dev profile enables quick test login and verbose local diagnostics)
 cd backend
-mvn spring-boot:run
+mvn spring-boot:run -Dspring-boot.run.profiles=dev
 
 # frontend (new terminal)
 cd frontend
