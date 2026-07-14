@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { inventoryApi } from '../../lib/api';
 import Icon from '../../components/Icon';
 import PageHeader from '../../components/PageHeader';
+import { LoadingState, EmptyState } from '../../components/StatePanel';
 
 export default function InventoryPage() {
   const { data: items = [], isLoading } = useQuery({ queryKey: ['inventory'], queryFn: inventoryApi.list });
@@ -45,9 +46,9 @@ export default function InventoryPage() {
       )}
 
       <h3 className="text-headline-md">All stock</h3>
-      {isLoading && <p className="text-on-surface-variant">Loading…</p>}
+      {isLoading && <LoadingState compact label="Loading inventory…" />}
       {!isLoading && items.length === 0 && (
-        <p className="text-on-surface-variant">No stock yet. It builds up as your orders are delivered.</p>
+        <EmptyState compact icon="inventory_2" title="No stock yet" description="Inventory will appear here as your delivered orders are added." />
       )}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-sm">
         {items.map((it) => (

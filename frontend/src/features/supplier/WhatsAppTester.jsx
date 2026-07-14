@@ -71,28 +71,30 @@ export default function WhatsAppTester() {
   const reset = () => setMessages([]);
 
   return (
-    <div className="bg-surface-container-lowest rounded-xl border border-surface-variant shadow-sm overflow-hidden">
-      <div className="px-lg py-md border-b border-outline-variant flex items-center justify-between gap-sm">
+    <section className="ui-card overflow-hidden">
+      <div className="flex items-center justify-between gap-sm border-b border-surface-variant bg-surface-container-low/60 px-lg py-md">
         <div className="flex items-center gap-sm">
           <Icon name="sms" className="text-secondary" />
           <h3 className="text-headline-md text-on-background">Test the assistant</h3>
         </div>
-        <button onClick={reset} className="text-label-md text-on-surface-variant hover:text-on-surface">Clear</button>
+          <button onClick={reset} className="ui-button-secondary min-h-9 px-3 py-1.5">Clear</button>
       </div>
 
-      <div className="px-lg py-sm border-b border-surface-variant flex items-center gap-sm">
-        <span className="text-label-sm text-on-surface-variant">Customer number</span>
+      <div className="flex flex-col gap-sm border-b border-surface-variant px-lg py-md sm:flex-row sm:items-center">
+        <label htmlFor="test-customer-number" className="text-label-sm font-semibold text-on-surface-variant">Customer number</label>
         <input
-          className="border border-outline-variant rounded-lg px-3 py-1 text-label-md outline-none focus:border-primary w-40"
+          id="test-customer-number"
+          aria-label="Customer number"
+          className="min-h-10 rounded-xl border border-outline-variant bg-surface-container-lowest px-3 py-1 text-label-md outline-none focus:border-primary sm:w-40"
           inputMode="numeric"
           value={from}
           onChange={(e) => setFrom(e.target.value)}
         />
-        <span className="text-label-sm text-on-surface-variant">Try a new number to see the new-customer flow.</span>
+        <span className="text-label-sm text-on-surface-variant sm:ml-auto">Use a new number to preview customer onboarding.</span>
       </div>
 
       {/* Conversation */}
-      <div className="p-md h-80 overflow-y-auto bg-surface-container-low space-y-sm">
+      <div className="h-96 space-y-sm overflow-y-auto bg-surface-container-low/70 p-md sm:p-lg">
         {messages.length === 0 && (
           <div className="h-full flex flex-col items-center justify-center text-center text-on-surface-variant gap-1">
             <Icon name="forum" className="text-[32px]" />
@@ -103,10 +105,10 @@ export default function WhatsAppTester() {
         {messages.map((m, i) => (
           <div key={i} className={`flex ${m.role === 'customer' ? 'justify-end' : 'justify-start'}`}>
             <div
-              className={`max-w-[80%] px-md py-2 rounded-2xl text-label-md whitespace-pre-wrap ${
+              className={`max-w-[88%] whitespace-pre-wrap px-md py-2.5 text-label-md shadow-sm sm:max-w-[72%] ${
                 m.role === 'customer'
-                  ? 'bg-primary text-on-primary rounded-br-sm'
-                  : 'bg-surface-container-highest text-on-surface rounded-bl-sm'
+                  ? 'rounded-2xl rounded-br-sm bg-primary text-on-primary'
+                  : 'rounded-2xl rounded-bl-sm border border-surface-variant bg-surface-container-lowest text-on-surface'
               }`}
             >
               {m.text}
@@ -120,16 +122,17 @@ export default function WhatsAppTester() {
       <div className="px-md pt-md flex gap-sm flex-wrap border-t border-surface-variant">
         {QUICK.map((q) => (
           <button key={q} onClick={() => sendQuick(q)} disabled={busy}
-            className="px-3 py-1 rounded-full border border-outline-variant text-label-sm text-on-surface hover:bg-surface-container disabled:opacity-50">
+            className="rounded-full border border-outline-variant bg-surface-container-lowest px-3 py-1.5 text-label-sm text-on-surface shadow-sm hover:border-primary hover:bg-primary-fixed/40 disabled:opacity-50">
             {q}
           </button>
         ))}
       </div>
 
       {/* Composer */}
-      <div className="p-md flex gap-sm">
+      <div className="flex gap-sm p-md sm:p-lg">
         <input
-          className="flex-1 border border-outline-variant rounded-full px-4 py-2 outline-none focus:border-primary"
+          aria-label="Customer message"
+          className="ui-input flex-1 rounded-full"
           placeholder="Type a customer message…"
           value={text}
           onChange={(e) => setText(e.target.value)}
@@ -138,11 +141,12 @@ export default function WhatsAppTester() {
         <button
           onClick={send}
           disabled={busy || !text.trim()}
-          className="bg-primary text-on-primary w-11 h-11 rounded-full flex items-center justify-center disabled:opacity-50"
+          aria-label="Send message"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary text-on-primary shadow-sm hover:-translate-y-px hover:shadow-md disabled:opacity-50"
         >
           <Icon name="send" className="text-[20px]" />
         </button>
       </div>
-    </div>
+    </section>
   );
 }

@@ -2,26 +2,31 @@ import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { whatsappApi } from '../../lib/api';
 import Icon from '../../components/Icon';
+import PageHeader from '../../components/PageHeader';
+import { LoadingState, EmptyState } from '../../components/StatePanel';
 import WhatsAppTester from './WhatsAppTester';
 
-function Toggle({ checked, onChange, disabled }) {
+function Toggle({ checked, onChange, disabled, label }) {
   return (
     <button
       type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
       disabled={disabled}
       onClick={() => onChange(!checked)}
-      className={`relative w-11 h-6 rounded-full transition-colors shrink-0 ${
-        checked ? 'bg-primary' : 'bg-surface-variant'
+      className={`relative h-7 w-12 shrink-0 rounded-full border transition-colors ${
+        checked ? 'border-primary bg-primary' : 'border-outline-variant bg-surface-container-high'
       } ${disabled ? 'opacity-40' : ''}`}
     >
-      <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-surface-container-lowest transition-transform ${checked ? 'translate-x-5' : ''}`} />
+      <span className={`absolute left-0.5 top-0.5 h-5.5 w-5.5 rounded-full bg-surface-container-lowest shadow-sm transition-transform ${checked ? 'translate-x-5' : ''}`} />
     </button>
   );
 }
 
 function Row({ title, sub, children }) {
   return (
-    <div className="flex items-center justify-between gap-md py-3">
+    <div className="flex flex-col gap-sm py-md sm:flex-row sm:items-center sm:justify-between sm:gap-md">
       <div className="min-w-0">
         <div className="text-on-surface font-medium">{title}</div>
         {sub && <div className="text-label-sm text-on-surface-variant">{sub}</div>}
@@ -38,7 +43,8 @@ function Segmented({ value, options, onChange }) {
         <button
           key={k}
           onClick={() => onChange(k)}
-          className={`px-3 py-1.5 ${value === k ? 'bg-primary text-on-primary font-semibold' : 'text-on-surface-variant'}`}
+          aria-pressed={value === k}
+          className={`min-h-10 px-3 py-1.5 ${value === k ? 'bg-primary text-on-primary font-semibold shadow-sm' : 'text-on-surface-variant hover:bg-surface-container-high'}`}
         >
           {l}
         </button>
@@ -105,22 +111,26 @@ export default function WhatsAppAiPage() {
   const approve = async (id) => { await whatsappApi.approveRequest(id); refresh(); };
   const reject = async (id) => { await whatsappApi.rejectRequest(id); refresh(); };
 
-  if (isLoading) return <p className="text-on-surface-variant">Loading…</p>;
+  if (isLoading) return <LoadingState label="Loading WhatsApp AI workspace…" />;
 
   const connected = settings?.connected;
 
   return (
-    <div className="space-y-lg">
-      <div className="flex items-center gap-sm">
-        <Icon name="forum" className="text-secondary text-[28px]" />
-        <div>
-          <h2 className="text-headline-lg font-bold text-on-background">WhatsApp AI</h2>
-          <p className="text-body-md text-on-surface-variant">Let customers order from chat, handled by your AI assistant.</p>
-        </div>
-      </div>
+    <div className="space-y-xl">
+      <PageHeader
+        icon="forum"
+        title="WhatsApp AI"
+        subtitle="Manage customer conversations, AI ordering, approvals, and assistant settings in one place."
+        action={
+          <span className={`inline-flex items-center gap-sm rounded-full px-3 py-1.5 text-label-md font-semibold ${connected ? 'bg-tertiary-fixed-dim text-on-tertiary-container' : 'bg-surface-container text-on-surface-variant'}`}>
+            <span className={`h-2 w-2 rounded-full ${connected ? 'bg-on-tertiary-container' : 'bg-outline'}`} />
+            {connected ? 'Assistant online' : 'Not connected'}
+          </span>
+        }
+      />
 
       {/* Connection status */}
-      <div className="bg-surface-container-lowest rounded-xl border border-surface-variant p-lg shadow-sm">
+      <section className="ui-card overflow-hidden p-lg sm:p-xl">
         {!connected ? (
           <div className="space-y-md">
             <div className="flex items-center gap-sm text-on-surface-variant">
@@ -128,15 +138,15 @@ export default function WhatsAppAiPage() {
               <span className="font-medium">Not connected</span>
             </div>
             <p className="text-label-md text-on-surface-variant">Connect your WhatsApp Business number to start receiving orders.</p>
-            <div className="flex gap-sm max-w-md">
+            <div className="flex flex-col gap-sm sm:max-w-xl sm:flex-row">
               <input
-                className="flex-1 border border-outline-variant rounded-lg py-2 px-3 outline-none focus:border-primary"
+                className="ui-input flex-1"
                 placeholder="Business number (digits)"
                 inputMode="numeric"
                 value={number}
                 onChange={(e) => setNumber(e.target.value)}
               />
-              <button onClick={connect} disabled={busy} className="bg-primary text-on-primary px-lg rounded-lg text-label-md font-semibold disabled:opacity-50">
+              <button onClick={connect} disabled={busy} className="ui-button-primary whitespace-nowrap">
                 Connect WhatsApp
               </button>
             </div>
@@ -150,7 +160,7 @@ export default function WhatsAppAiPage() {
               </div>
               <button onClick={disconnect} disabled={busy} className="text-error text-label-md hover:underline disabled:opacity-50">Disconnect</button>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-sm pt-sm">
+            <div className="grid grid-cols-2 gap-sm pt-md md:grid-cols-3">
               <Info label="Business Number" value={`+91 ${settings.businessNumber}`} />
               <Info label="AI Status" value={settings.aiEnabled ? 'Enabled' : 'Disabled'} ok={settings.aiEnabled} />
               <Info label="Auto Order" value={settings.autoCreateOrders ? 'ON' : 'OFF'} ok={settings.autoCreateOrders} />
@@ -160,13 +170,13 @@ export default function WhatsAppAiPage() {
             </div>
           </div>
         )}
-      </div>
+      </section>
 
       {connected && (
         <>
           {/* Human takeover */}
-          <div className={`rounded-xl p-lg shadow-sm border ${settings.humanTakeover ? 'bg-error-container border-error/30' : 'bg-surface-container-lowest border-surface-variant'}`}>
-            <div className="flex items-center justify-between gap-md">
+          <section className={`rounded-2xl border p-lg shadow-sm ${settings.humanTakeover ? 'border-error/30 bg-error-container/60' : 'border-surface-variant bg-surface-container-lowest'}`}>
+            <div className="flex flex-col gap-md sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <div className="font-semibold text-on-surface flex items-center gap-sm">
                   <Icon name="support_agent" className={settings.humanTakeover ? 'text-error' : 'text-secondary'} />
@@ -177,24 +187,24 @@ export default function WhatsAppAiPage() {
                 </p>
               </div>
               {settings.humanTakeover ? (
-                <button onClick={() => takeover(false)} disabled={busy} className="bg-primary text-on-primary px-lg py-2 rounded-lg text-label-md font-semibold disabled:opacity-50">Resume AI</button>
+                <button onClick={() => takeover(false)} disabled={busy} className="ui-button-primary">Resume AI</button>
               ) : (
-                <button onClick={() => takeover(true)} disabled={busy} className="border border-outline-variant text-on-surface px-lg py-2 rounded-lg text-label-md font-semibold disabled:opacity-50">Take Over</button>
+                <button onClick={() => takeover(true)} disabled={busy} className="ui-button-secondary">Take over</button>
               )}
             </div>
-          </div>
+          </section>
 
           {/* Live tester */}
           <WhatsAppTester />
 
           {/* Pending retailer requests */}
-          <div className="bg-surface-container-lowest rounded-xl border border-surface-variant shadow-sm overflow-hidden">
-            <div className="px-lg py-md border-b border-outline-variant flex items-center justify-between">
+          <section className="ui-card overflow-hidden">
+            <div className="flex items-center justify-between border-b border-surface-variant bg-surface-container-low/60 px-lg py-md">
               <h3 className="text-headline-md text-on-background">New retailer requests</h3>
               {requests.length > 0 && <span className="text-label-sm bg-error-container text-error px-2 py-0.5 rounded-md">{requests.length} pending</span>}
             </div>
             <div className="divide-y divide-surface-variant">
-              {requests.length === 0 && <p className="p-lg text-on-surface-variant">No pending requests.</p>}
+              {requests.length === 0 && <EmptyState compact icon="group_add" title="No pending requests" description="New retailer approvals will appear here." />}
               {requests.map((r) => (
                 <div key={r.id} className="flex flex-wrap items-center justify-between gap-sm px-lg py-md">
                   <div>
@@ -204,17 +214,23 @@ export default function WhatsAppAiPage() {
                     </div>
                   </div>
                   <div className="flex gap-sm">
-                    <button onClick={() => reject(r.id)} className="px-md py-1.5 rounded-md border border-outline-variant text-error text-label-md font-semibold hover:bg-error-container">Reject</button>
-                    <button onClick={() => approve(r.id)} className="px-md py-1.5 rounded-md bg-tertiary-container text-on-tertiary-container text-label-md font-semibold hover:opacity-90">Approve</button>
+                    <button onClick={() => reject(r.id)} className="ui-button-secondary min-h-10 px-md py-1.5 text-error hover:border-error hover:bg-error-container">Reject</button>
+                    <button onClick={() => approve(r.id)} className="ui-button-primary min-h-10 bg-tertiary-container px-md py-1.5 text-on-tertiary-container">Approve</button>
                   </div>
                 </div>
               ))}
             </div>
-          </div>
+          </section>
 
           {/* AI Settings */}
-          <div className="bg-surface-container-lowest rounded-xl border border-surface-variant p-lg shadow-sm">
-            <h3 className="text-headline-md text-on-background mb-sm">AI Settings</h3>
+          <section className="ui-card p-lg sm:p-xl">
+            <div className="mb-md flex items-center gap-sm">
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-secondary-fixed text-secondary"><Icon name="tune" className="text-[20px]" /></span>
+              <div>
+                <h3 className="text-headline-md text-on-background">AI settings</h3>
+                <p className="text-label-sm text-on-surface-variant">Control how the assistant responds and creates orders.</p>
+              </div>
+            </div>
             <div className="divide-y divide-surface-variant">
               <Row title="Language" sub="Reply language for customers">
                 <Segmented
@@ -243,15 +259,15 @@ export default function WhatsAppAiPage() {
               </Row>
 
               <Row title="AI auto-reply" sub="Assistant responds to messages automatically">
-                <Toggle checked={settings.aiEnabled && settings.autoReply} disabled={busy} onChange={(v) => patch({ aiEnabled: v, autoReply: v })} />
+                <Toggle label="AI auto-reply" checked={settings.aiEnabled && settings.autoReply} disabled={busy} onChange={(v) => patch({ aiEnabled: v, autoReply: v })} />
               </Row>
 
               <Row title="Require customer confirmation" sub='Customer must reply "YES" before an order is placed'>
-                <Toggle checked={settings.requireConfirmation} disabled={busy} onChange={(v) => patch({ requireConfirmation: v })} />
+                <Toggle label="Require customer confirmation" checked={settings.requireConfirmation} disabled={busy} onChange={(v) => patch({ requireConfirmation: v })} />
               </Row>
 
               <Row title="Create orders automatically" sub="Place orders without manual review">
-                <Toggle checked={settings.autoCreateOrders} disabled={busy} onChange={(v) => patch({ autoCreateOrders: v })} />
+                <Toggle label="Create orders automatically" checked={settings.autoCreateOrders} disabled={busy} onChange={(v) => patch({ autoCreateOrders: v })} />
               </Row>
 
               <Row title="Seller approval" sub="When you must approve a new retailer">
@@ -262,7 +278,7 @@ export default function WhatsAppAiPage() {
                 />
               </Row>
             </div>
-          </div>
+          </section>
         </>
       )}
     </div>
@@ -271,9 +287,9 @@ export default function WhatsAppAiPage() {
 
 function Info({ label, value, ok }) {
   return (
-    <div>
+    <div className="rounded-xl border border-surface-variant bg-surface-container-low/70 p-md">
       <div className="text-label-sm text-on-surface-variant">{label}</div>
-      <div className={`font-semibold ${ok === false ? 'text-error' : ok === true ? 'text-tertiary-container' : 'text-on-surface'}`}>{value}</div>
+      <div className={`mt-xs font-semibold ${ok === false ? 'text-error' : ok === true ? 'text-on-tertiary-container' : 'text-on-surface'}`}>{value}</div>
     </div>
   );
 }

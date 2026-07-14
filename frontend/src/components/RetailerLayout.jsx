@@ -26,18 +26,18 @@ function FloatingButtons() {
       <button
         onClick={() => navigate('/scan')}
         aria-label="Scan & Sell"
-        className="fixed bottom-5 left-5 z-50 w-16 h-16 rounded-full bg-secondary text-on-secondary shadow-xl flex items-center justify-center hover:scale-105 transition-transform"
+        className="fixed bottom-5 left-4 z-30 flex h-14 w-14 items-center justify-center rounded-2xl bg-secondary text-on-secondary shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl focus-visible:ring-offset-background sm:left-5 md:bottom-6 md:left-[296px]"
       >
         <Icon name="barcode_scanner" className="text-[30px]" />
       </button>
       <button
         onClick={() => navigate('/cart')}
         aria-label="Cart"
-        className="fixed bottom-5 right-5 z-50 w-16 h-16 rounded-full bg-primary text-on-primary shadow-xl flex items-center justify-center hover:scale-105 transition-transform"
+        className="fixed bottom-5 right-4 z-30 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-on-primary shadow-lg transition hover:-translate-y-0.5 hover:shadow-xl focus-visible:ring-offset-background sm:right-5 md:bottom-6 md:right-6"
       >
         <Icon name="shopping_cart" className="text-[28px]" />
         {count > 0 && (
-          <span className="absolute -top-1 -right-1 bg-error text-on-error text-[12px] font-bold min-w-[22px] h-[22px] px-1 rounded-full flex items-center justify-center">
+          <span className="absolute -right-1.5 -top-1.5 flex h-[22px] min-w-[22px] items-center justify-center rounded-full border-2 border-background bg-error px-1 text-[11px] font-bold text-on-error shadow-sm">
             {count}
           </span>
         )}

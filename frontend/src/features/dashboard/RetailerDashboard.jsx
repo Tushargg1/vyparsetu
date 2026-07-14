@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { dashboardApi, salesApi, orderApi } from '../../lib/api';
 import { useAuthStore } from '../../stores/authStore';
 import Icon from '../../components/Icon';
+import { LoadingState } from '../../components/StatePanel';
 
 const money = (v) => `₹${Number(v ?? 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const moneyShort = (v) => `₹${Number(v ?? 0).toLocaleString('en-IN')}`;
@@ -40,7 +41,7 @@ function Stat({ label, value, icon, accent, onClick }) {
     <button
       onClick={onClick}
       disabled={!onClick}
-      className={`bg-surface-container-lowest rounded-2xl border border-surface-variant p-md flex items-center gap-md shadow-sm text-left w-full ${onClick ? 'hover:border-primary hover:shadow-md transition-all' : ''}`}
+      className={`ui-card flex w-full items-center gap-md p-md text-left ${onClick ? 'transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md' : ''}`}
     >
       <span className={`w-12 h-12 rounded-full flex items-center justify-center shrink-0 ${accent}`}>
         <Icon name={icon} className="text-[24px]" />
@@ -67,7 +68,7 @@ export default function RetailerDashboard() {
     queryFn: () => orderApi.mine({ page: 0, size: 1 }),
   });
 
-  if (isLoading) return <p className="text-on-surface-variant">Loading…</p>;
+  if (isLoading) return <LoadingState label="Preparing your dashboard…" />;
   const d = data || {};
 
   const placedOrders = ordersPage?.totalElements ?? (ordersPage?.content?.length || 0);
@@ -101,7 +102,7 @@ export default function RetailerDashboard() {
       </div>
 
       {/* Stat tiles */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-gutter">
+      <div className="grid grid-cols-1 gap-md sm:grid-cols-2 lg:grid-cols-4">
         <Stat
           label="Placed orders"
           value={`${placedOrders} ${placedOrders === 1 ? 'order' : 'orders'}`}

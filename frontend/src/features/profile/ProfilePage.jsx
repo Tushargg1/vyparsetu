@@ -3,6 +3,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { distributorApi, retailerApi } from '../../lib/api';
 import { useAuthStore } from '../../stores/authStore';
 import Icon from '../../components/Icon';
+import PageHeader from '../../components/PageHeader';
+import { LoadingState } from '../../components/StatePanel';
 
 const EMPTY = {
   ownerName: '',
@@ -25,7 +27,7 @@ function Field({ label, value, onChange, placeholder, full, type = 'text', input
         value={value || ''}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="block w-full mt-1 border border-outline-variant rounded-lg py-2 px-3 outline-none focus:border-primary bg-surface-container-lowest"
+        className="ui-input mt-xs"
       />
     </label>
   );
@@ -89,21 +91,17 @@ export default function ProfilePage() {
     );
   };
 
-  if (isLoading) return <p className="text-on-surface-variant">Loading…</p>;
+  if (isLoading) return <LoadingState label="Loading your profile…" />;
 
   return (
     <div className="space-y-lg max-w-3xl">
-      <div className="flex items-center gap-sm">
-        <Icon name="badge" className="text-secondary text-[28px]" />
-        <div>
-          <h2 className="text-headline-lg font-bold text-on-background">My profile</h2>
-          <p className="text-body-md text-on-surface-variant">
-            Your contact details {isSupplier ? 'are shown to retailers.' : 'are shown to your distributor.'}
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        icon="badge"
+        title="My profile"
+        subtitle={`Your contact details ${isSupplier ? 'are shown to retailers.' : 'are shown to your distributor.'}`}
+      />
 
-      <div className="bg-surface-container-lowest rounded-xl border border-surface-variant p-lg shadow-sm space-y-md">
+      <div className="ui-card space-y-lg p-lg sm:p-xl">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
           <Field label="Owner name" value={form.ownerName} onChange={set('ownerName')} placeholder="Your name" />
           <Field label={shopLabel} value={form.displayName} onChange={set('displayName')} placeholder={shopLabel} />
@@ -131,10 +129,10 @@ export default function ProfilePage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-sm">
-          <button onClick={save} disabled={busy} className="bg-primary text-on-primary px-lg py-2 rounded-lg text-label-md font-semibold disabled:opacity-50">
+          <button onClick={save} disabled={busy} className="ui-button-primary">
             Save profile
           </button>
-          <button onClick={useMyLocation} className="flex items-center gap-sm border border-outline-variant text-on-surface px-md py-2 rounded-lg text-label-md font-semibold hover:bg-surface-container">
+          <button onClick={useMyLocation} className="ui-button-secondary">
             <Icon name="my_location" className="text-[18px]" />
             Use my location
           </button>

@@ -6,19 +6,19 @@ import Icon from './Icon';
  */
 export default function PageHeader({ icon, title, subtitle, action }) {
   return (
-    <div className="flex items-start justify-between gap-md flex-wrap">
-      <div className="flex items-start gap-md">
+    <header className="flex flex-col gap-md border-b border-surface-variant pb-lg sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex min-w-0 items-start gap-md">
         {icon && (
-          <span className="w-11 h-11 rounded-xl bg-primary-fixed text-primary flex items-center justify-center shrink-0">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary-fixed text-primary shadow-sm">
             <Icon name={icon} className="text-[24px]" />
           </span>
         )}
-        <div>
-          <h2 className="text-headline-lg font-bold text-on-background">{title}</h2>
-          {subtitle && <p className="text-body-md text-on-surface-variant mt-xs">{subtitle}</p>}
+        <div className="min-w-0">
+          <h1 className="text-headline-md font-bold tracking-tight text-on-background sm:text-headline-lg">{title}</h1>
+          {subtitle && <p className="mt-xs max-w-2xl text-label-md text-on-surface-variant sm:text-body-md">{subtitle}</p>}
         </div>
       </div>
-      {action}
-    </div>
+      {action && <div className="flex shrink-0 items-center">{action}</div>}
+    </header>
   );
 }

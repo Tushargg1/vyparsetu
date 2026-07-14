@@ -3,6 +3,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supplierOrderApi, distributorApi } from '../../lib/api';
 import Icon from '../../components/Icon';
 import BarChart from '../../components/BarChart';
+import PageHeader from '../../components/PageHeader';
+import { LoadingState } from '../../components/StatePanel';
 import { money, statusBadge, nextStatuses, retailerMap, paymentBadge } from './supplierUtils';
 import { isoDate, TREND_TOGGLE, buildBuckets, effectiveIndex, activePeriod, rangeWord } from '../../lib/trend';
 
@@ -31,8 +33,8 @@ function OrderCard({ order, retailerName, open, onToggle, onMove }) {
   const total = Number(order.totalAmount || 0);
   const pending = pendingOf(order);
   return (
-    <div className="border border-surface-variant rounded-xl overflow-hidden bg-surface-container-lowest">
-      <button onClick={onToggle} className="w-full flex items-center justify-between gap-sm px-lg py-md text-left hover:bg-surface-container">
+    <div className="overflow-hidden rounded-2xl border border-surface-variant bg-surface-container-lowest shadow-sm">
+      <button onClick={onToggle} className="flex w-full flex-col gap-sm px-md py-md text-left hover:bg-surface-container-low sm:flex-row sm:items-center sm:justify-between sm:px-lg">
         <div className="flex items-center gap-sm min-w-0">
           <Icon name={open ? 'expand_less' : 'expand_more'} className="text-on-surface-variant" />
           <div className="min-w-0">
@@ -40,7 +42,7 @@ function OrderCard({ order, retailerName, open, onToggle, onMove }) {
             <div className="text-label-sm text-on-surface-variant truncate">{retailerName} · {dateOnly(order.placedAt)} · {items.length} items</div>
           </div>
         </div>
-        <div className="flex items-center gap-sm shrink-0">
+        <div className="flex w-full items-center justify-between gap-sm pl-xl sm:w-auto sm:justify-end sm:pl-0">
           <div className="text-right">
             <div className="font-bold text-on-surface">{money(total)}</div>
             {pending > 0 ? <div className="text-label-sm font-semibold text-error">{money(pending)} due</div> : <div className="text-label-sm font-semibold text-on-tertiary-container">Paid</div>}
@@ -50,7 +52,8 @@ function OrderCard({ order, retailerName, open, onToggle, onMove }) {
       </button>
       {open && (
         <div className="px-lg py-md border-t border-surface-variant space-y-md">
-          <table className="w-full text-label-md">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[520px] text-label-md">
             <thead>
               <tr className="text-on-surface-variant text-label-sm">
                 <th className="text-left font-medium py-1">Product</th>
@@ -70,6 +73,7 @@ function OrderCard({ order, retailerName, open, onToggle, onMove }) {
               ))}
             </tbody>
           </table>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-sm bg-surface-container rounded-lg p-md">
             <TimelineStep label="Received" value={dateOnly(order.placedAt)} done />
             <TimelineStep label="Packed" value={order.packedAt ? dateOnly(order.packedAt) : 'Pending'} done={!!order.packedAt} />
@@ -187,10 +191,7 @@ export default function SupplierOrdersPage() {
 
   return (
     <div className="space-y-lg">
-      <div>
-        <h2 className="text-headline-lg font-bold text-on-background">Orders</h2>
-        <p className="text-body-md text-on-surface-variant mt-xs">Accept, pack and dispatch retailer orders.</p>
-      </div>
+      <PageHeader icon="receipt_long" title="Orders" subtitle="Accept, pack, dispatch, and review retailer orders." />
 
       <div className="flex bg-surface-container rounded-lg overflow-hidden text-label-md w-fit">
         {[['live', 'Live orders'], ['history', 'All orders']].map(([k, l]) => (
@@ -198,7 +199,7 @@ export default function SupplierOrdersPage() {
         ))}
       </div>
 
-      {isLoading && <p className="text-on-surface-variant">Loading…</p>}
+      {isLoading && <LoadingState compact label="Loading retailer orders…" />}
 
       {view === 'live' && !isLoading && (
         <div className="space-y-lg">
@@ -251,7 +252,7 @@ export default function SupplierOrdersPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-gutter">
+          <div className="grid grid-cols-1 gap-md sm:grid-cols-3">
             <Summary icon="receipt_long" label="Received" value={periodStats.received} accent="text-primary" />
             <Summary icon="inventory_2" label="Packed" value={periodStats.packed} accent="text-secondary" />
             <Summary icon="local_shipping" label="Delivered" value={periodStats.delivered} accent="text-on-tertiary-container" />

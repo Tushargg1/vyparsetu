@@ -13,8 +13,16 @@ export default function OrderTimeline({ orderId }) {
     enabled: !!orderId,
   });
 
-  if (isLoading) return <p className="text-label-sm text-on-surface-variant">Loading timeline…</p>;
-  if (history.length === 0) return <p className="text-label-sm text-on-surface-variant">No history yet.</p>;
+  if (isLoading) return (
+    <div className="flex items-center gap-sm rounded-xl bg-surface-container-low p-md text-label-sm text-on-surface-variant" role="status">
+      <Icon name="progress_activity" className="animate-spin text-[18px]" /> Loading timeline…
+    </div>
+  );
+  if (history.length === 0) return (
+    <div className="flex items-center gap-sm rounded-xl border border-dashed border-outline-variant p-md text-label-sm text-on-surface-variant">
+      <Icon name="history" className="text-[18px]" /> No order history yet.
+    </div>
+  );
 
   return (
     <div className="pl-1">

@@ -95,9 +95,41 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="bg-mesh min-h-screen flex items-center justify-center p-md">
-      <main className="w-full max-w-md bg-surface-container-lowest rounded-[32px] shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-surface-container-high/50 p-lg md:p-xl">
-        <div className="flex flex-col items-center mb-xl">
+    <div className="bg-mesh min-h-screen p-md sm:p-lg">
+      <main className="mx-auto grid min-h-[calc(100vh-2rem)] w-full max-w-6xl overflow-hidden rounded-[32px] border border-surface-variant bg-surface-container-lowest shadow-xl sm:min-h-[calc(100vh-3rem)] lg:grid-cols-[1.05fr_0.95fr]">
+        <aside className="relative hidden overflow-hidden bg-primary p-2xl text-on-primary lg:flex lg:flex-col lg:justify-between">
+          <div className="relative z-10 flex items-center gap-sm text-body-lg font-bold">
+            <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-on-primary/10">
+              <Icon name="storefront" className="text-[24px]" />
+            </span>
+            VyaparMantra
+          </div>
+          <div className="relative z-10 max-w-lg">
+            <span className="inline-flex items-center gap-xs rounded-full bg-on-primary/10 px-3 py-1.5 text-label-sm text-primary-fixed">
+              <Icon name="verified" className="text-[16px]" /> Built for Indian businesses
+            </span>
+            <h2 className="mt-lg text-display-lg font-bold leading-tight">Run your business with clarity and confidence.</h2>
+            <p className="mt-md text-body-lg text-primary-fixed-dim">Orders, inventory, retailers, payments, and AI-assisted commerce—together in one calm workspace.</p>
+          </div>
+          <div className="relative z-10 grid grid-cols-3 gap-sm">
+            {[
+              ['inventory_2', 'Stock'],
+              ['receipt_long', 'Orders'],
+              ['auto_awesome', 'AI insights'],
+            ].map(([icon, label]) => (
+              <div key={label} className="rounded-2xl border border-on-primary/10 bg-on-primary/5 p-md">
+                <Icon name={icon} className="text-primary-fixed" />
+                <p className="mt-sm text-label-md font-semibold">{label}</p>
+              </div>
+            ))}
+          </div>
+          <span className="absolute -right-20 -top-20 h-72 w-72 rounded-full bg-secondary/30 blur-3xl" />
+          <span className="absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-on-tertiary-container/20 blur-3xl" />
+        </aside>
+
+        <section className="flex items-center justify-center p-lg sm:p-xl lg:p-2xl">
+          <div className="w-full max-w-md">
+        <div className="mb-xl flex flex-col items-center lg:hidden">
           <div className="w-16 h-16 bg-gradient-to-br from-primary to-primary-container rounded-2xl flex items-center justify-center mb-md shadow-lg">
             <Icon name="storefront" className="text-on-primary text-[32px]" />
           </div>
@@ -106,12 +138,15 @@ export default function LoginPage() {
         </div>
 
         {error && (
-          <div className="mb-md p-sm rounded-xl bg-error-container text-on-error-container text-label-md">{error}</div>
+          <div className="mb-md flex items-start gap-sm rounded-xl border border-error-container bg-error-container/60 p-md text-on-error-container" role="alert">
+            <Icon name="error" className="mt-0.5 shrink-0 text-[18px]" />
+            <span className="text-label-md">{error}</span>
+          </div>
         )}
 
         {step === 'details' ? (
           <>
-            <h2 className="text-[20px] font-semibold text-on-surface mb-md">Choose Your Role</h2>
+          <h2 className="mb-md text-body-lg font-semibold text-on-surface">Choose your workspace</h2>
             <div className="grid grid-cols-1 gap-sm mb-xl">
               {ROLES.map((r) => {
                 const active = role === r.key;
@@ -119,9 +154,10 @@ export default function LoginPage() {
                   <button
                     key={r.key}
                     onClick={() => setRole(r.key)}
+                    aria-pressed={active}
                     className={`w-full flex items-center p-md rounded-2xl border text-left transition-all ${
-                      active ? 'border-2 border-secondary shadow-md' : 'border-surface-container-high hover:border-primary/30'
-                    } bg-surface-container-lowest`}
+                      active ? 'border-secondary bg-secondary-fixed/40 shadow-sm ring-1 ring-secondary' : 'border-surface-variant hover:border-primary/40 hover:bg-surface-container-low'
+                    }`}
                   >
                     <div className={`w-12 h-12 rounded-xl flex items-center justify-center mr-md ${active ? 'bg-secondary text-on-secondary' : 'bg-surface-container-high text-primary'}`}>
                       <Icon name={r.icon} className="text-[24px]" />
@@ -135,12 +171,12 @@ export default function LoginPage() {
               })}
             </div>
 
-            <h2 className="text-[20px] font-semibold text-on-surface mb-md">Login or Register</h2>
+            <h2 className="mb-md text-body-lg font-semibold text-on-surface">Sign in or create an account</h2>
             <div className="flex flex-col gap-md">
               <div className="flex">
                 <span className="inline-flex items-center px-4 rounded-l-xl border border-r-0 border-outline-variant bg-surface-container text-on-surface-variant">+91</span>
                 <input
-                  className="block w-full border border-outline-variant bg-surface-container-lowest rounded-r-xl focus:ring-2 focus:ring-primary/20 focus:border-primary py-3 px-4 text-body-md outline-none"
+                  className="ui-input rounded-l-none"
                   placeholder="10-digit mobile number"
                   inputMode="numeric"
                   value={form.phone}
@@ -167,7 +203,7 @@ export default function LoginPage() {
               <button
                 onClick={sendOtp}
                 disabled={loading}
-                className="w-full bg-gradient-to-r from-primary to-secondary text-on-primary py-4 rounded-xl font-bold tracking-wide shadow-lg disabled:opacity-60 flex items-center justify-center gap-2"
+                className="ui-button-primary mt-xs w-full py-3.5"
               >
                 <span>Send OTP</span>
                 <Icon name="arrow_forward" className="text-[20px]" />
@@ -187,7 +223,7 @@ export default function LoginPage() {
           </>
         ) : (
           <div className="flex flex-col gap-md">
-            <h2 className="text-[20px] font-semibold text-on-surface">Enter OTP</h2>
+            <h2 className="text-headline-md font-semibold text-on-surface">Enter your verification code</h2>
             <p className="text-label-sm text-on-surface-variant">Sent to +91 {form.phone} (check the backend console in dev)</p>
             <input
               className="w-full border border-outline-variant rounded-xl py-4 px-4 text-headline-md text-center tracking-[0.5em] outline-none focus:border-primary"
@@ -196,12 +232,14 @@ export default function LoginPage() {
               value={otp}
               onChange={(e) => setOtp(e.target.value)}
             />
-            <button onClick={verify} disabled={loading} className="w-full bg-gradient-to-r from-primary to-secondary text-on-primary py-4 rounded-xl font-bold shadow-lg disabled:opacity-60">
+            <button onClick={verify} disabled={loading} className="ui-button-primary w-full py-3.5">
               Verify & Continue
             </button>
-            <button onClick={() => setStep('details')} className="text-secondary text-label-md">Change details</button>
+            <button onClick={() => setStep('details')} className="min-h-11 rounded-xl text-secondary text-label-md font-semibold hover:bg-secondary-fixed/40">Change details</button>
           </div>
         )}
+          </div>
+        </section>
       </main>
     </div>
   );

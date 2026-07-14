@@ -60,12 +60,12 @@ export default function OrderModifyModal({ order, onClose, onSaved }) {
   const available = products.filter((p) => !lines.some((l) => l.productId === p.id));
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-margin-mobile">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative bg-surface-container-lowest rounded-2xl shadow-xl w-full max-w-lg p-lg space-y-md max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-margin-mobile" role="dialog" aria-modal="true" aria-labelledby="modify-order-title">
+      <button className="absolute inset-0 bg-inverse-surface/40 backdrop-blur-sm" onClick={onClose} aria-label="Close edit order dialog" />
+      <div className="relative max-h-[90vh] w-full max-w-lg space-y-md overflow-y-auto rounded-2xl border border-surface-variant bg-surface-container-lowest p-lg shadow-xl sm:p-xl">
         <div className="flex items-center justify-between">
-          <h3 className="text-headline-md text-on-surface">Edit order {order.orderNumber}</h3>
-          <button onClick={onClose} className="text-on-surface-variant hover:text-on-surface"><Icon name="close" /></button>
+          <h3 id="modify-order-title" className="text-headline-md text-on-surface">Edit order {order.orderNumber}</h3>
+          <button onClick={onClose} className="ui-icon-button" aria-label="Close edit order dialog"><Icon name="close" /></button>
         </div>
         <p className="text-label-sm text-on-surface-variant">
           Prices are recalculated by the system (including any special price for this retailer).
@@ -75,7 +75,7 @@ export default function OrderModifyModal({ order, onClose, onSaved }) {
           {lines.map((l) => {
             const p = productById.get(l.productId);
             return (
-              <div key={l.productId} className="flex items-center gap-sm py-2">
+              <div key={l.productId} className="my-sm flex items-center gap-sm rounded-xl border border-surface-variant bg-surface-container-low/50 p-sm">
                 <div className="flex-1 min-w-0">
                   <div className="font-medium text-on-surface truncate">{p?.name || `Product #${l.productId}`}</div>
                   {p && <div className="text-label-sm text-on-surface-variant">{money(p.sellingPrice)} each</div>}
@@ -83,7 +83,7 @@ export default function OrderModifyModal({ order, onClose, onSaved }) {
                 <input type="number" min="0" value={l.quantity}
                   onChange={(e) => setQty(l.productId, e.target.value)}
                   className="w-20 border border-outline-variant rounded-lg py-1.5 px-2 text-right outline-none focus:border-primary" />
-                <button onClick={() => removeLine(l.productId)} className="text-error hover:bg-error-container rounded-lg p-1.5">
+                <button aria-label={`Remove ${p?.name || `product ${l.productId}`}`} onClick={() => removeLine(l.productId)} className="ui-icon-button text-error hover:bg-error-container hover:text-error">
                   <Icon name="delete" className="text-[20px]" />
                 </button>
               </div>
@@ -113,8 +113,8 @@ export default function OrderModifyModal({ order, onClose, onSaved }) {
         {msg && <p className="text-label-md text-error">{msg}</p>}
 
         <div className="flex justify-end gap-sm">
-          <button onClick={onClose} className="px-lg py-2.5 rounded-xl text-label-md font-semibold text-on-surface hover:bg-surface-container">Cancel</button>
-          <button onClick={save} disabled={busy} className="bg-primary text-on-primary px-lg py-2.5 rounded-xl text-label-md font-semibold disabled:opacity-50">
+          <button onClick={onClose} className="ui-button-secondary">Cancel</button>
+          <button onClick={save} disabled={busy} className="ui-button-primary">
             {busy ? 'Saving…' : 'Save changes'}
           </button>
         </div>

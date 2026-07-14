@@ -3,6 +3,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { distributorApi, supplierOrderApi } from '../../lib/api';
 import Icon from '../../components/Icon';
+import PageHeader from '../../components/PageHeader';
+import { EmptyState } from '../../components/StatePanel';
 import { money, retailerStats, timeAgo } from './supplierUtils';
 
 export default function RetailersPage() {
@@ -41,19 +43,17 @@ export default function RetailersPage() {
 
   return (
     <div className="space-y-lg">
-      <div className="flex items-center justify-between gap-md flex-wrap">
-        <div>
-          <h2 className="text-headline-lg font-bold text-on-background">Retailers</h2>
-          <p className="text-body-md text-on-surface-variant mt-xs">{retailers.length} linked to your network</p>
-        </div>
-        <button
-          onClick={() => setShowForm((v) => !v)}
-          className="flex items-center gap-sm bg-primary text-on-primary px-lg py-2 rounded-lg text-label-md font-semibold"
-        >
-          <Icon name={showForm ? 'close' : 'person_add'} className="text-[18px]" />
-          {showForm ? 'Close' : 'Add retailer'}
-        </button>
-      </div>
+      <PageHeader
+        icon="groups"
+        title="Retailers"
+        subtitle={`${retailers.length} linked to your distribution network`}
+        action={
+          <button onClick={() => setShowForm((v) => !v)} className="ui-button-primary">
+            <Icon name={showForm ? 'close' : 'person_add'} className="text-[18px]" />
+            {showForm ? 'Close' : 'Add retailer'}
+          </button>
+        }
+      />
 
       {showForm && (
         <div className="bg-surface-container-lowest rounded-xl border border-surface-variant p-lg shadow-sm">
@@ -83,7 +83,7 @@ export default function RetailersPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-gutter">
         {visible.length === 0 && (
-          <p className="text-on-surface-variant col-span-full">No retailers found.</p>
+          <div className="col-span-full"><EmptyState compact icon="group_off" title="No retailers found" description="Try a different name, phone number, or city." /></div>
         )}
         {visible.map((r) => {
           const s = stats.get(r.retailerId) || { orders: 0, revenue: 0, pending: 0, due: 0, lastAt: null };
@@ -91,7 +91,7 @@ export default function RetailersPage() {
             <Link
               key={r.retailerId}
               to={`/supplier/retailers/${r.retailerId}`}
-              className="bg-surface-container-lowest rounded-xl border border-surface-variant p-lg shadow-sm hover:border-primary transition-colors"
+              className="ui-card p-lg transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"
             >
               <div className="flex items-start justify-between gap-sm">
                 <div className="flex items-center gap-md min-w-0">

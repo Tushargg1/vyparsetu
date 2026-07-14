@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { productApi } from '../../lib/api';
 import Icon from '../../components/Icon';
+import PageHeader from '../../components/PageHeader';
+import { LoadingState, EmptyState } from '../../components/StatePanel';
 import GstSelect from './GstSelect';
 import ProductEditModal from './ProductEditModal';
 
@@ -64,17 +66,20 @@ export default function SupplierStockPage() {
 
   return (
     <div className="space-y-lg">
-      <div className="flex items-center justify-between flex-wrap gap-sm">
-        <h2 className="text-headline-lg font-bold text-on-background">Stock / Products</h2>
-        <button onClick={() => setLowOnly((v) => !v)}
-          className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-label-md font-semibold border transition-colors ${
-            lowOnly ? 'bg-error text-on-error border-error' : 'border-outline-variant text-on-surface hover:bg-surface-container'}`}>
-          <Icon name="warning" className="text-[18px]" />
-          {lowOnly ? 'Showing low stock' : `Needs restock${lowCount ? ` (${lowCount})` : ''}`}
-        </button>
-      </div>
+      <PageHeader
+        icon="inventory_2"
+        title="Stock & products"
+        subtitle="Manage your catalog, pricing, GST, and available inventory."
+        action={
+          <button onClick={() => setLowOnly((v) => !v)}
+            className={`ui-button-secondary ${lowOnly ? 'border-error bg-error-container text-error' : ''}`}>
+            <Icon name="warning" className="text-[18px]" />
+            {lowOnly ? 'Showing low stock' : `Needs restock${lowCount ? ` (${lowCount})` : ''}`}
+          </button>
+        }
+      />
 
-      <div className="bg-surface-container-lowest rounded-xl border border-surface-variant p-lg shadow-sm">
+      <section className="ui-card p-lg sm:p-xl">
         <h3 className="text-headline-md mb-md flex items-center gap-sm"><Icon name="add_box" className="text-secondary" /> Add a product</h3>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-sm">
           <input className="border border-outline-variant rounded-lg py-2 px-3 outline-none focus:border-primary col-span-2 md:col-span-1" placeholder="Name" value={form.name} onChange={set('name')} />
@@ -91,13 +96,13 @@ export default function SupplierStockPage() {
           </label>
         </div>
         <button onClick={add} className="mt-md bg-primary text-on-primary px-lg py-2 rounded-lg font-semibold">Add product</button>
-        {msg && <p className="mt-sm text-label-md text-on-surface-variant">{msg}</p>}
-      </div>
+        {msg && <p className="mt-sm text-label-md text-on-surface-variant" role="status">{msg}</p>}
+      </section>
 
-      {isLoading && <p className="text-on-surface-variant">Loading…</p>}
+      {isLoading && <LoadingState compact label="Loading product catalog…" />}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-sm">
         {shown.map((p) => (
-          <div key={p.id} className={`bg-surface-container-lowest rounded-xl border p-md flex justify-between items-center gap-sm ${p.lowStock ? 'border-error/40' : 'border-surface-variant'}`}>
+          <article key={p.id} className={`ui-card flex items-center justify-between gap-sm p-md transition hover:shadow-md ${p.lowStock ? 'border-error/40' : ''}`}>
             <div className="min-w-0">
               <p className="font-semibold text-on-surface truncate">{p.name}</p>
               <p className="text-label-sm text-on-surface-variant">{p.brand} · GST {String(p.gstRate)}%</p>
@@ -128,20 +133,22 @@ export default function SupplierStockPage() {
                 )}
               </div>
             </div>
-          </div>
+          </article>
         ))}
         {!isLoading && shown.length === 0 && (
-          <p className="text-on-surface-variant">{lowOnly ? 'Nothing needs restocking right now.' : 'No products yet. Add your first above.'}</p>
+          <div className="col-span-full">
+            <EmptyState compact icon={lowOnly ? 'task_alt' : 'inventory_2'} title={lowOnly ? 'Stock levels look healthy' : 'No products yet'} description={lowOnly ? 'Nothing needs restocking right now.' : 'Add your first product using the form above.'} />
+          </div>
         )}
       </div>
 
       {restock && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-margin-mobile">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setRestock(null)} />
-          <div className="relative bg-surface-container-lowest rounded-2xl shadow-xl w-full max-w-sm p-lg space-y-md">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-margin-mobile" role="dialog" aria-modal="true" aria-labelledby="restock-title">
+          <button className="absolute inset-0 bg-inverse-surface/40 backdrop-blur-sm" onClick={() => setRestock(null)} aria-label="Close restock dialog" />
+          <div className="relative w-full max-w-sm space-y-md rounded-2xl border border-surface-variant bg-surface-container-lowest p-lg shadow-xl sm:p-xl">
             <div className="flex items-center justify-between">
-              <h3 className="text-headline-md text-on-surface">Restock</h3>
-              <button onClick={() => setRestock(null)} className="text-on-surface-variant hover:text-on-surface"><Icon name="close" /></button>
+              <h3 id="restock-title" className="text-headline-md text-on-surface">Restock</h3>
+              <button onClick={() => setRestock(null)} className="ui-icon-button" aria-label="Close restock dialog"><Icon name="close" /></button>
             </div>
             <p className="text-label-md text-on-surface-variant">
               <span className="font-semibold text-on-surface">{restock.product.name}</span> — currently {String(restock.product.stockQty)} on hand.
@@ -152,8 +159,8 @@ export default function SupplierStockPage() {
                 className="block w-full mt-1 border border-outline-variant rounded-lg py-2.5 px-3 outline-none focus:border-primary text-headline-md font-bold" />
             </label>
             <div className="flex justify-end gap-sm">
-              <button onClick={() => setRestock(null)} className="px-lg py-2.5 rounded-xl text-label-md font-semibold text-on-surface hover:bg-surface-container">Cancel</button>
-              <button onClick={submitRestock} disabled={restockBusy} className="bg-primary text-on-primary px-lg py-2.5 rounded-xl text-label-md font-semibold disabled:opacity-50">
+              <button onClick={() => setRestock(null)} className="ui-button-secondary">Cancel</button>
+              <button onClick={submitRestock} disabled={restockBusy} className="ui-button-primary">
                 {restockBusy ? 'Saving…' : 'Add stock'}
               </button>
             </div>

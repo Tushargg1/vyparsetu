@@ -37,10 +37,12 @@ export default function ContactCard({
   const place = [address, city, state, pincode].filter(Boolean).join(', ');
 
   return (
-    <div className="bg-surface-container-lowest rounded-xl border border-surface-variant shadow-sm">
-      <div className="px-lg py-md border-b border-outline-variant flex items-center gap-sm">
-        <Icon name="contact_page" className="text-secondary" />
-        <h3 className="text-headline-md text-on-background">{title}</h3>
+    <section className="ui-card overflow-hidden">
+      <div className="flex items-center gap-sm border-b border-surface-variant bg-surface-container-low/60 px-lg py-md">
+        <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-secondary-fixed text-secondary">
+          <Icon name="contact_page" className="text-[20px]" />
+        </span>
+        <h3 className="text-body-lg font-semibold text-on-background">{title}</h3>
       </div>
 
       <div className="p-lg space-y-md">
@@ -71,7 +73,7 @@ export default function ContactCard({
             href={locationUrl}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center gap-sm bg-primary-fixed text-primary px-md py-2 rounded-lg text-label-md font-semibold hover:opacity-90"
+            className="ui-button-secondary"
           >
             <Icon name="map" className="text-[18px]" />
             Open shared location
@@ -82,6 +84,6 @@ export default function ContactCard({
           <p className="text-on-surface-variant text-label-md">No contact details saved yet.</p>
         )}
       </div>
-    </div>
+    </section>
   );
 }
