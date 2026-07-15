@@ -155,7 +155,12 @@ export default function SupplierOrdersPage() {
   const retailerName = (o) => rmap.get(o.retailerId)?.shopName || `Retailer #${o.retailerId}`;
 
   const pending = useMemo(() => orders.filter((o) => o.status === 'PENDING').sort((a, b) => new Date(a.placedAt) - new Date(b.placedAt)), [orders]);
-  const packedToday = useMemo(() => orders.filter((o) => o.status === 'PACKED' && isToday(o.packedAt)).sort((a, b) => new Date(b.packedAt) - new Date(a.packedAt)), [orders]);
+  const inProgress = useMemo(
+    () => orders
+      .filter((o) => ['ACCEPTED', 'PACKED', 'OUT_FOR_DELIVERY'].includes(o.status))
+      .sort((a, b) => new Date(a.placedAt) - new Date(b.placedAt)),
+    [orders],
+  );
   const deliveredToday = useMemo(() => orders.filter((o) => DELIVERED_SET.has(o.status) && isToday(o.deliveredAt)).sort((a, b) => new Date(b.deliveredAt) - new Date(a.deliveredAt)), [orders]);
 
   const changeRange = (k) => { setRange(k); setSelIdx(null); };
@@ -206,8 +211,8 @@ export default function SupplierOrdersPage() {
           <Section icon="pending_actions" title="Pending orders" accent="text-error" count={pending.length}>
             {pending.length === 0 ? <Empty text="No pending orders. You're all caught up." icon="task_alt" /> : <div className="space-y-sm">{pending.map((o) => <OrderCard {...cardProps(o)} />)}</div>}
           </Section>
-          <Section icon="inventory_2" title="Packed today" accent="text-secondary" count={packedToday.length}>
-            {packedToday.length === 0 ? <Empty text="Nothing packed today yet." icon="package_2" /> : <div className="space-y-sm">{packedToday.map((o) => <OrderCard {...cardProps(o)} />)}</div>}
+          <Section icon="inventory_2" title="Orders in progress" accent="text-secondary" count={inProgress.length}>
+            {inProgress.length === 0 ? <Empty text="No accepted, packed, or dispatched orders." icon="package_2" /> : <div className="space-y-sm">{inProgress.map((o) => <OrderCard {...cardProps(o)} />)}</div>}
           </Section>
           <Section icon="local_shipping" title="Delivered today" accent="text-on-tertiary-container" count={deliveredToday.length}>
             {deliveredToday.length === 0 ? <Empty text="No deliveries today yet." icon="local_shipping" /> : <div className="space-y-sm">{deliveredToday.map((o) => <OrderCard {...cardProps(o)} />)}</div>}

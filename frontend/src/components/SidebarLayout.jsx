@@ -1,16 +1,23 @@
 import { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { authApi } from '../lib/api';
 import { useAuthStore } from '../stores/authStore';
 import Icon from './Icon';
 
 export default function SidebarLayout({ subtitle, nav }) {
   const navigate = useNavigate();
-  const { user, clearAuth } = useAuthStore();
+  const { user, refreshToken, clearAuth } = useAuthStore();
   const [open, setOpen] = useState(false);
 
-  const logout = () => {
-    clearAuth();
-    navigate('/login');
+  const logout = async () => {
+    try {
+      if (refreshToken) await authApi.logout(refreshToken);
+    } catch {
+      // Always clear the local session if the token is stale or the API is unavailable.
+    } finally {
+      clearAuth();
+      navigate('/login', { replace: true });
+    }
   };
 
   const SidebarInner = (

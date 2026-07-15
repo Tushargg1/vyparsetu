@@ -285,6 +285,11 @@ public class OrderService {
         if (newLineItems == null || newLineItems.isEmpty()) {
             throw new BusinessException("Order must keep at least one item");
         }
+        if (newLineItems.stream().anyMatch(line -> line.productId() == null
+                || line.quantity() == null || line.quantity().signum() <= 0)) {
+            throw new BusinessException("INVALID_ORDER_ITEMS", org.springframework.http.HttpStatus.BAD_REQUEST,
+                    "Every order item needs a valid product and a quantity greater than zero");
+        }
         Order order = find(id);
         ensureParticipant(order);
         if (!MODIFIABLE.contains(order.getStatus())) {
@@ -295,6 +300,11 @@ public class OrderService {
         Map<Long, Product> products = productRepository.findAllById(
                         newLineItems.stream().map(LineItem::productId).toList())
                 .stream().collect(Collectors.toMap(Product::getId, Function.identity()));
+        long requestedProductCount = newLineItems.stream().map(LineItem::productId).distinct().count();
+        if (products.size() != requestedProductCount) {
+            throw new BusinessException("PRODUCT_NOT_FOUND", org.springframework.http.HttpStatus.BAD_REQUEST,
+                    "One or more requested products do not exist");
+        }
 
         // Release the previously reserved stock, then re-reserve against the new lines.
         stockService.release(stockLinesOf(order));

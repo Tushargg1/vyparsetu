@@ -11,6 +11,10 @@ import java.util.Optional;
 public interface OrderRepository extends JpaRepository<Order, Long> {
     Optional<Order> findByUuid(String uuid);
 
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @org.springframework.data.jpa.repository.Query("SELECT o FROM Order o WHERE o.id = :id")
+    Optional<Order> findByIdForUpdate(@org.springframework.data.repository.query.Param("id") Long id);
+
     Page<Order> findByRetailerId(Long retailerId, Pageable pageable);
 
     Page<Order> findBySupplierId(Long supplierId, Pageable pageable);

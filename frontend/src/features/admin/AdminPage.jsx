@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { adminApi } from '../../lib/api';
+import { adminApi, authApi } from '../../lib/api';
 import { useAuthStore } from '../../stores/authStore';
 import Icon from '../../components/Icon';
 
@@ -18,10 +18,21 @@ function Stat({ title, value, icon }) {
 
 export default function AdminPage() {
   const navigate = useNavigate();
-  const clearAuth = useAuthStore((s) => s.clearAuth);
+  const { refreshToken, clearAuth } = useAuthStore();
   const { data: counts } = useQuery({ queryKey: ['admin-dash'], queryFn: adminApi.dashboard });
   const { data: usersPage } = useQuery({ queryKey: ['admin-users'], queryFn: () => adminApi.users({ page: 0, size: 50 }) });
   const users = usersPage?.content || [];
+
+  const logout = async () => {
+    try {
+      if (refreshToken) await authApi.logout(refreshToken);
+    } catch {
+      // Always clear the local session if the token is stale or the API is unavailable.
+    } finally {
+      clearAuth();
+      navigate('/login', { replace: true });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background px-margin-mobile py-lg md:px-margin-desktop md:py-margin-desktop">
@@ -31,7 +42,7 @@ export default function AdminPage() {
           <h1 className="text-headline-lg font-bold text-primary">VyaparMantra · Admin</h1>
           <p className="text-body-md text-on-surface-variant mt-xs">Platform overview</p>
         </div>
-        <button onClick={() => { clearAuth(); navigate('/login'); }} className="ui-button-secondary text-error hover:border-error hover:bg-error-container">
+        <button onClick={logout} className="ui-button-secondary text-error hover:border-error hover:bg-error-container">
           <Icon name="logout" /> Logout
         </button>
       </header>
