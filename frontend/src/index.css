@@ -52,8 +52,31 @@
     @apply text-on-surface placeholder:text-on-surface-variant/70;
   }
 
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']) {
+    @apply cursor-pointer;
+  }
+
+  ::selection {
+    @apply bg-secondary-fixed text-on-surface;
+  }
+
   th {
     @apply whitespace-nowrap;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
 
