@@ -16,6 +16,12 @@ services:
       - key: JWT_SECRET
         generateValue: true
       - key: CORS_ALLOWED_ORIGINS
-        sync: false
-      - key: SPRING_JPA_HIBERNATE_DDL_AUTO
-        value: none
+        value: https://vyparsetu.vercel.app
+      - key: SPRING_PROFILES_ACTIVE
+        value: render
+      - key: DB_POOL_SIZE
+        value: 5
+      - key: STORAGE_PATH
+        value: /tmp/vyaparsetu/storage
+      - key: JAVA_TOOL_OPTIONS
+        value: -XX:MaxRAMPercentage=75.0 -XX:+UseG1GC
