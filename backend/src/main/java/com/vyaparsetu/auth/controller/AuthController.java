@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/auth")
-@Tag(name = "Authentication", description = "OTP-based registration, login and token management")
+@Tag(name = "Authentication", description = "Password, passkey and authenticator sign-in")
 public class AuthController {
 
     private final AuthService authService;
@@ -26,24 +26,18 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    @Operation(summary = "Register a new user and send a verification OTP")
-    public ResponseEntity<ApiResponse<Void>> register(@Valid @RequestBody RegisterRequest req) {
-        authService.register(req);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(null));
+    @Operation(summary = "Create an email/password account")
+    public ResponseEntity<ApiResponse<AuthTokenResponse>> register(
+            @Valid @RequestBody RegisterRequest req, HttpServletRequest http) {
+        AuthTokenResponse tokens = authService.register(req, http.getHeader("User-Agent"));
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok(tokens));
     }
 
-    @PostMapping("/otp/send")
-    @Operation(summary = "Send an OTP for login/registration/reset")
-    public ApiResponse<Void> sendOtp(@Valid @RequestBody SendOtpRequest req) {
-        authService.sendOtp(req);
-        return ApiResponse.ok(null);
-    }
-
-    @PostMapping("/otp/verify")
-    @Operation(summary = "Verify an OTP and receive access/refresh tokens")
-    public ApiResponse<AuthTokenResponse> verifyOtp(@Valid @RequestBody VerifyOtpRequest req,
-                                                    HttpServletRequest http) {
-        return ApiResponse.ok(authService.verifyOtp(req, http.getHeader("User-Agent")));
+    @PostMapping("/password/login")
+    @Operation(summary = "Sign in with email and password")
+    public ApiResponse<AuthTokenResponse> passwordLogin(
+            @Valid @RequestBody PasswordLoginRequest req, HttpServletRequest http) {
+        return ApiResponse.ok(authService.loginWithPassword(req, http.getHeader("User-Agent")));
     }
 
     @PostMapping("/refresh")

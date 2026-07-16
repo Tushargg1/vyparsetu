@@ -16,6 +16,8 @@ app:
       origins:
         - http://localhost:5173
   features:
+    demo-login:
+      enabled: true
     whatsapp:
       enabled: true
       # provider: meta            # set to 'meta' and fill the values below for real WhatsApp

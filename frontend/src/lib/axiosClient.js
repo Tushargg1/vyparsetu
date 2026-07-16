@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { getAccessToken, getRefreshToken, useAuthStore } from '../stores/authStore';
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '/api/v1').replace(/\/$/, '');
+export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '/api/v1').replace(/\/$/, '');
 
 const client = axios.create({
   baseURL: API_BASE_URL,
@@ -22,12 +22,14 @@ client.interceptors.response.use(
   (response) => response,
   async (error) => {
     const original = error.config;
-    if (error.response?.status === 401 && !original._retry) {
+    const refreshToken = getRefreshToken();
+    const isAuthRequest = original?.url?.includes('/auth/');
+    if (error.response?.status === 401 && original && !original._retry && refreshToken && !isAuthRequest) {
       original._retry = true;
       try {
         refreshing =
           refreshing ||
-          axios.post(`${API_BASE_URL}/auth/refresh`, { refreshToken: getRefreshToken() });
+          axios.post(`${API_BASE_URL}/auth/refresh`, { refreshToken });
         const { data } = await refreshing;
         refreshing = null;
         const payload = data.data;

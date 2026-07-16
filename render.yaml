@@ -23,6 +23,22 @@ services:
         value: https://vyparsetu.vercel.app
       - key: CORS_ALLOWED_ORIGINS
         value: https://vyparsetu.vercel.app
+      - key: DEMO_LOGIN_ENABLED
+        value: true
+      - key: OAUTH_FRONTEND_URL
+        value: https://vyparsetu.vercel.app
+      - key: GOOGLE_OAUTH_CLIENT_ID
+        sync: false
+      - key: GOOGLE_OAUTH_CLIENT_SECRET
+        sync: false
+      - key: GOOGLE_OAUTH_REDIRECT_URI
+        value: https://vyparsetu.onrender.com/api/v1/auth/oauth/google/callback
+      - key: APPLE_OAUTH_CLIENT_ID
+        sync: false
+      - key: APPLE_OAUTH_CLIENT_SECRET
+        sync: false
+      - key: APPLE_OAUTH_REDIRECT_URI
+        value: https://vyparsetu.onrender.com/api/v1/auth/oauth/apple/callback
       - key: SPRING_PROFILES_ACTIVE
         value: render
       - key: DB_POOL_SIZE

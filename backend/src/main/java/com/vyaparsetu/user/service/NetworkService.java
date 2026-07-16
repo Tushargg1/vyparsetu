@@ -1,6 +1,5 @@
 package com.vyaparsetu.user.service;
 
-import com.vyaparsetu.auth.service.OtpService;
 import com.vyaparsetu.common.enums.Enums;
 import com.vyaparsetu.common.enums.RoleName;
 import com.vyaparsetu.common.exception.BusinessException;
@@ -38,18 +37,16 @@ public class NetworkService {
     private final RetailerRepository retailerRepository;
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
-    private final OtpService otpService;
     private final UserService userService;
     private final OrderRepository orderRepository;
 
     public NetworkService(SupplierRepository supplierRepository, RetailerRepository retailerRepository,
                           UserRepository userRepository, RoleRepository roleRepository,
-                          OtpService otpService, UserService userService, OrderRepository orderRepository) {
+                          UserService userService, OrderRepository orderRepository) {
         this.supplierRepository = supplierRepository;
         this.retailerRepository = retailerRepository;
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
-        this.otpService = otpService;
         this.userService = userService;
         this.orderRepository = orderRepository;
     }
@@ -127,9 +124,6 @@ public class NetworkService {
         retailer.setLocationUrl(req.locationUrl());
         retailer.setDistributorId(supplier.getId());
         retailer = retailerRepository.save(retailer);
-
-        // send a login OTP so the retailer can activate their account
-        otpService.generateAndSend(req.phone(), Enums.OtpChannel.SMS, Enums.OtpPurpose.LOGIN, user.getId());
 
         return toRetailerSummary(retailer, user);
     }

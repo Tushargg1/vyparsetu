@@ -137,9 +137,12 @@ public class AppProperties {
 
     public static class Features {
         private Toggle procurement = new Toggle();
+        private Toggle demoLogin = new Toggle();
         private WhatsappFeature whatsapp = new WhatsappFeature();
         public Toggle getProcurement() { return procurement; }
         public void setProcurement(Toggle procurement) { this.procurement = procurement; }
+        public Toggle getDemoLogin() { return demoLogin; }
+        public void setDemoLogin(Toggle demoLogin) { this.demoLogin = demoLogin; }
         public WhatsappFeature getWhatsapp() { return whatsapp; }
         public void setWhatsapp(WhatsappFeature whatsapp) { this.whatsapp = whatsapp; }
     }

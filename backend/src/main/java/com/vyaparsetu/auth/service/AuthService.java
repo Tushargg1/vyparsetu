@@ -1,7 +1,6 @@
 package com.vyaparsetu.auth.service;
 
 import com.vyaparsetu.auth.dto.*;
-import com.vyaparsetu.auth.entity.OtpToken;
 import com.vyaparsetu.auth.entity.RefreshToken;
 import com.vyaparsetu.auth.repository.RefreshTokenRepository;
 import com.vyaparsetu.common.config.AppProperties;
@@ -33,7 +32,6 @@ public class AuthService {
     private final RetailerRepository retailerRepository;
     private final SupplierRepository supplierRepository;
     private final RefreshTokenRepository refreshTokenRepository;
-    private final OtpService otpService;
     private final TotpService totpService;
     private final JwtTokenProvider tokenProvider;
     private final PasswordEncoder encoder;
@@ -42,7 +40,7 @@ public class AuthService {
 
     public AuthService(UserRepository userRepository, RoleRepository roleRepository,
                        RetailerRepository retailerRepository, SupplierRepository supplierRepository,
-                       RefreshTokenRepository refreshTokenRepository, OtpService otpService,
+                       RefreshTokenRepository refreshTokenRepository,
                        TotpService totpService, JwtTokenProvider tokenProvider,
                        PasswordEncoder encoder, AppProperties props) {
         this.userRepository = userRepository;
@@ -50,7 +48,6 @@ public class AuthService {
         this.retailerRepository = retailerRepository;
         this.supplierRepository = supplierRepository;
         this.refreshTokenRepository = refreshTokenRepository;
-        this.otpService = otpService;
         this.totpService = totpService;
         this.tokenProvider = tokenProvider;
         this.encoder = encoder;
@@ -58,24 +55,28 @@ public class AuthService {
     }
 
     @Transactional
-    public void register(RegisterRequest req) {
-        // SECURITY: never allow privileged roles to be created via public self-registration.
-        if (req.role() == null || req.role() == RoleName.ADMIN) {
+    public AuthTokenResponse register(RegisterRequest req, String deviceInfo) {
+        // SECURITY: public self-registration is limited to business-facing roles.
+        if (req.role() == null || (req.role() != RoleName.RETAILER && req.role() != RoleName.SUPPLIER)) {
             throw new BusinessException("ROLE_NOT_ALLOWED", HttpStatus.FORBIDDEN,
                     "This role cannot be self-registered");
         }
+        String email = normalizeEmail(req.email());
         if (userRepository.existsByPhone(req.phone())) {
             throw new BusinessException("PHONE_TAKEN", HttpStatus.CONFLICT, "Phone already registered");
         }
-        if (req.email() != null && userRepository.existsByEmail(req.email())) {
+        if (userRepository.existsByEmailIgnoreCase(email)) {
             throw new BusinessException("EMAIL_TAKEN", HttpStatus.CONFLICT, "Email already registered");
         }
 
         User user = new User();
-        user.setName(req.name());
+        user.setName(req.name().trim());
         user.setPhone(req.phone());
-        user.setEmail(req.email());
-        user.setStatus(Enums.UserStatus.PENDING);
+        user.setEmail(email);
+        user.setPasswordHash(encoder.encode(req.password()));
+        user.setStatus(Enums.UserStatus.ACTIVE);
+        user.setPhoneVerified(false);
+        user.setEmailVerified(false);
         if (req.preferredLanguage() != null) {
             user.setPreferredLanguage(req.preferredLanguage());
         }
@@ -85,9 +86,27 @@ public class AuthService {
         user = userRepository.save(user);
 
         createRoleProfile(user.getId(), req);
+        return issueTokens(user, deviceInfo, Instant.now(), "PASSWORD");
+    }
 
-        // send registration OTP to phone
-        otpService.generateAndSend(req.phone(), Enums.OtpChannel.SMS, Enums.OtpPurpose.REGISTER, user.getId());
+    @Transactional
+    public AuthTokenResponse loginWithPassword(PasswordLoginRequest req, String deviceInfo) {
+        String email = normalizeEmail(req.email());
+        User user = userRepository.findByEmailIgnoreCase(email).orElse(null);
+        if (user == null || user.getPasswordHash() == null
+                || !encoder.matches(req.password(), user.getPasswordHash())) {
+            throw new BusinessException("INVALID_CREDENTIALS", HttpStatus.UNAUTHORIZED,
+                    "Invalid email or password");
+        }
+        if (user.getStatus() != Enums.UserStatus.ACTIVE || user.getDeletedAt() != null) {
+            throw new BusinessException("ACCOUNT_NOT_ACTIVE", HttpStatus.FORBIDDEN,
+                    "Account is not active");
+        }
+        return issueTokens(user, deviceInfo, Instant.now(), "PASSWORD");
+    }
+
+    private String normalizeEmail(String email) {
+        return email == null ? "" : email.trim().toLowerCase(java.util.Locale.ROOT);
     }
 
     private void createRoleProfile(Long userId, RegisterRequest req) {
@@ -145,47 +164,12 @@ public class AuthService {
     }
 
     @Transactional
-    public void sendOtp(SendOtpRequest req) {
-        Long userId = null;
-        if (req.purpose() == Enums.OtpPurpose.LOGIN) {
-            // SECURITY: do not reveal whether an account exists (anti-enumeration).
-            // Silently no-op for unknown identifiers.
-            var existing = userRepository.findByPhone(req.identifier())
-                    .or(() -> userRepository.findByEmail(req.identifier()));
-            if (existing.isEmpty()) {
-                return;
-            }
-            userId = existing.get().getId();
-        }
-        otpService.generateAndSend(req.identifier(), req.channel(), req.purpose(), userId);
-    }
-
-    @Transactional
-    public AuthTokenResponse verifyOtp(VerifyOtpRequest req, String deviceInfo) {
-        OtpToken token = otpService.verify(req.identifier(), req.code(), req.purpose());
-
-        User user = findByIdentifier(req.identifier());
-        if (req.purpose() == Enums.OtpPurpose.REGISTER) {
-            user.setStatus(Enums.UserStatus.ACTIVE);
-        } else if (user.getStatus() != Enums.UserStatus.ACTIVE) {
-            // SECURITY: suspended / not-yet-activated accounts cannot obtain tokens.
-            throw new BusinessException("ACCOUNT_NOT_ACTIVE", HttpStatus.FORBIDDEN,
-                    "Account is not active");
-        }
-        if (token.getChannel() == Enums.OtpChannel.SMS) {
-            user.setPhoneVerified(true);
-        } else {
-            user.setEmailVerified(true);
-        }
-        userRepository.save(user);
-        return issueTokens(user, deviceInfo, Instant.now(), "OTP");
-    }
-
-    @Transactional
     public TotpChallengeResponse startTotpLogin(TotpOptionsRequest req) {
-        User user = userRepository.findByPhone(req.identifier())
-                .or(() -> userRepository.findByEmail(req.identifier()))
+        String identifier = req.identifier().trim();
+        User user = userRepository.findByPhone(identifier)
+                .or(() -> userRepository.findByEmailIgnoreCase(identifier))
                 .filter(value -> value.getStatus() == Enums.UserStatus.ACTIVE)
+                .filter(value -> value.getDeletedAt() == null)
                 .filter(value -> totpService.isEnabled(value.getId()))
                 .orElseThrow(() -> new BusinessException("TOTP_UNAVAILABLE", HttpStatus.BAD_REQUEST,
                         "Authenticator sign-in is not available for this account"));
@@ -202,7 +186,7 @@ public class AuthService {
     public AuthTokenResponse issueTokensAfterStrongAuth(Long userId, String deviceInfo, String method) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", userId));
-        if (user.getStatus() != Enums.UserStatus.ACTIVE) {
+        if (user.getStatus() != Enums.UserStatus.ACTIVE || user.getDeletedAt() != null) {
             throw new BusinessException("ACCOUNT_NOT_ACTIVE", HttpStatus.FORBIDDEN, "Account is not active");
         }
         return issueTokens(user, deviceInfo, Instant.now(), method);
@@ -222,8 +206,8 @@ public class AuthService {
 
         User user = userRepository.findById(stored.getUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("User", stored.getUserId()));
-        // SECURITY: a suspended account cannot refresh into new access tokens.
-        if (user.getStatus() != Enums.UserStatus.ACTIVE) {
+        // SECURITY: a suspended or deleted account cannot refresh into new access tokens.
+        if (user.getStatus() != Enums.UserStatus.ACTIVE || user.getDeletedAt() != null) {
             throw new BusinessException("ACCOUNT_NOT_ACTIVE", HttpStatus.FORBIDDEN, "Account is not active");
         }
         Instant authenticatedAt = stored.getAuthenticatedAt() != null
@@ -247,6 +231,23 @@ public class AuthService {
         return issueTokens(user, "dev-login", Instant.now(), "DEV");
     }
 
+    @Transactional
+    public AuthTokenResponse issueDemoTokensForUser(User user) {
+        Set<RoleName> roles = user.getRoles().stream().map(Role::getName).collect(Collectors.toSet());
+        if (user.getStatus() != Enums.UserStatus.ACTIVE || user.getDeletedAt() != null
+                || roles.contains(RoleName.ADMIN)
+                || !(roles.equals(Set.of(RoleName.RETAILER)) || roles.equals(Set.of(RoleName.SUPPLIER)))) {
+            throw new BusinessException("DEMO_ACCOUNT_INVALID", HttpStatus.FORBIDDEN,
+                    "Demo account is unavailable");
+        }
+        return issueTokens(user, "public-demo", Instant.now(), "DEMO");
+    }
+
+    @Transactional
+    public AuthTokenResponse issueOAuthTokens(Long userId, String deviceInfo, String provider) {
+        return issueTokensAfterStrongAuth(userId, deviceInfo, "OAUTH_" + provider.toUpperCase(java.util.Locale.ROOT));
+    }
+
     private AuthTokenResponse issueTokens(User user, String deviceInfo,
                                           Instant authenticatedAt, String authMethod) {
         Set<String> roles = user.getRoles().stream()
@@ -266,12 +267,6 @@ public class AuthService {
 
         long expiresIn = props.getSecurity().getJwt().getAccessTokenTtlMinutes() * 60;
         return AuthTokenResponse.authenticated(access, rawRefresh, expiresIn, UserResponse.from(user));
-    }
-
-    private User findByIdentifier(String identifier) {
-        return userRepository.findByPhone(identifier)
-                .or(() -> userRepository.findByEmail(identifier))
-                .orElseThrow(() -> new ResourceNotFoundException("User", identifier));
     }
 
     private String generateRefreshToken() {

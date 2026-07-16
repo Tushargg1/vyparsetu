@@ -28,7 +28,6 @@ import com.vyaparsetu.user.repository.SupplierRepository;
 import com.vyaparsetu.user.repository.UserRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -52,7 +51,6 @@ import java.util.Set;
  * without OTP so the UI test-login buttons work instantly.
  */
 @Service
-@Profile("dev")
 public class DevSeedService {
 
     private static final String TEST_INVITE_CODE = "VS-TEST0001";
@@ -113,6 +111,26 @@ public class DevSeedService {
         User user = userRepository.findByPhone(phone)
                 .orElseThrow(() -> new BusinessException("DEV_USER_MISSING", HttpStatus.INTERNAL_SERVER_ERROR, "Dev user missing"));
         return authService.issueTokensForUser(user);
+    }
+
+    /** Public demo login. Only the two synthetic business roles are allowed. */
+    @Transactional
+    public AuthTokenResponse loginDemo(RoleName role) {
+        if (role != RoleName.RETAILER && role != RoleName.SUPPLIER) {
+            throw new BusinessException("DEMO_ROLE_NOT_ALLOWED", HttpStatus.FORBIDDEN,
+                    "Only retailer and distributor demos are available");
+        }
+        Supplier distributor = ensureDistributor();
+        ensureCatalog(distributor.getId());
+        Retailer retailer = ensureRetailer(distributor.getId());
+        ensureRetailerStock(retailer.getId(), distributor.getId());
+        ensureHistory(retailer.getId(), distributor.getId());
+
+        String phone = role == RoleName.SUPPLIER ? DIST_PHONE : RETAILER_PHONE;
+        User user = userRepository.findByPhone(phone)
+                .orElseThrow(() -> new BusinessException("DEMO_USER_MISSING",
+                        HttpStatus.INTERNAL_SERVER_ERROR, "Demo user missing"));
+        return authService.issueDemoTokensForUser(user);
     }
 
     private Supplier ensureDistributor() {

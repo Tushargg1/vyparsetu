@@ -3,7 +3,6 @@ package com.vyaparsetu.auth;
 import com.vyaparsetu.auth.dto.RegisterRequest;
 import com.vyaparsetu.auth.repository.RefreshTokenRepository;
 import com.vyaparsetu.auth.service.AuthService;
-import com.vyaparsetu.auth.service.OtpService;
 import com.vyaparsetu.auth.service.TotpService;
 import com.vyaparsetu.common.config.AppProperties;
 import com.vyaparsetu.common.enums.RoleName;
@@ -23,7 +22,7 @@ class AuthServiceTest {
     private AuthService newService(UserRepository userRepository) {
         return new AuthService(userRepository, mock(RoleRepository.class),
                 mock(RetailerRepository.class), mock(SupplierRepository.class),
-                mock(RefreshTokenRepository.class), mock(OtpService.class), mock(TotpService.class),
+                mock(RefreshTokenRepository.class), mock(TotpService.class),
                 mock(JwtTokenProvider.class), mock(PasswordEncoder.class), new AppProperties());
     }
 
@@ -32,10 +31,11 @@ class AuthServiceTest {
         UserRepository userRepository = mock(UserRepository.class);
         AuthService service = newService(userRepository);
 
-        RegisterRequest req = new RegisterRequest("Hacker", "9876543210", null,
-                RoleName.ADMIN, null, null, null, null, null, null, null, null, null, null, null, null);
+        RegisterRequest req = new RegisterRequest("Hacker", "9876543210",
+                "hacker@example.com", "password123", RoleName.ADMIN,
+                null, null, null, null, null, null, null, null, null, null, null, null);
 
-        BaseException ex = assertThrows(BaseException.class, () -> service.register(req));
+        BaseException ex = assertThrows(BaseException.class, () -> service.register(req, "test"));
         assertEquals(HttpStatus.FORBIDDEN, ex.getStatus());
         verify(userRepository, never()).save(any());
     }
@@ -43,8 +43,9 @@ class AuthServiceTest {
     @Test
     void registerRejectsNullRole() {
         AuthService service = newService(mock(UserRepository.class));
-        RegisterRequest req = new RegisterRequest("X", "9876543210", null,
-                null, null, null, null, null, null, null, null, null, null, null, null, null);
-        assertThrows(BaseException.class, () -> service.register(req));
+        RegisterRequest req = new RegisterRequest("X", "9876543210",
+                "x@example.com", "password123", null,
+                null, null, null, null, null, null, null, null, null, null, null, null);
+        assertThrows(BaseException.class, () -> service.register(req, "test"));
     }
 }

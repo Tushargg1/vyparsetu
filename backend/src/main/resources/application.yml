@@ -52,7 +52,25 @@ app:
       rp-name: ${WEBAUTHN_RP_NAME:VyaparMantra}
       origins: ${WEBAUTHN_ORIGINS:${CORS_ALLOWED_ORIGINS:http://localhost:5173}}
       ceremony-ttl-minutes: 5
+    oauth:
+      frontend-url: ${OAUTH_FRONTEND_URL:http://localhost:5173}
+      google:
+        client-id: ${GOOGLE_OAUTH_CLIENT_ID:}
+        client-secret: ${GOOGLE_OAUTH_CLIENT_SECRET:}
+        redirect-uri: ${GOOGLE_OAUTH_REDIRECT_URI:http://localhost:8080/api/v1/auth/oauth/google/callback}
+        authorization-uri: https://accounts.google.com/o/oauth2/v2/auth
+        token-uri: https://oauth2.googleapis.com/token
+        issuer-uri: https://accounts.google.com
+      apple:
+        client-id: ${APPLE_OAUTH_CLIENT_ID:}
+        client-secret: ${APPLE_OAUTH_CLIENT_SECRET:}
+        redirect-uri: ${APPLE_OAUTH_REDIRECT_URI:http://localhost:8080/api/v1/auth/oauth/apple/callback}
+        authorization-uri: https://appleid.apple.com/auth/authorize
+        token-uri: https://appleid.apple.com/auth/token
+        issuer-uri: https://appleid.apple.com
   features:
+    demo-login:
+      enabled: ${DEMO_LOGIN_ENABLED:false}
     procurement:
       enabled: false
     whatsapp:

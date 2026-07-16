@@ -2,14 +2,15 @@ import client, { unwrap } from './axiosClient';
 
 export const authApi = {
   register: (body) => unwrap(client.post('/auth/register', body)),
-  sendOtp: (body) => unwrap(client.post('/auth/otp/send', body)),
-  verifyOtp: (body) => unwrap(client.post('/auth/otp/verify', body)),
+  passwordLogin: (body) => unwrap(client.post('/auth/password/login', body)),
+  demoLogin: (role) => unwrap(client.post('/auth/demo-login', { role })),
+  oauthProviders: () => unwrap(client.get('/auth/oauth/providers')),
+  oauthExchange: (body) => unwrap(client.post('/auth/oauth/exchange', body)),
   totpOptions: (body) => unwrap(client.post('/auth/totp/options', body)),
   passkeyOptions: (body) => unwrap(client.post('/auth/passkeys/options', body)),
   verifyPasskey: (body) => unwrap(client.post('/auth/passkeys/verify', body)),
   verifyTotp: (body) => unwrap(client.post('/auth/totp/verify', body)),
   logout: (refreshToken) => unwrap(client.post('/auth/logout', { refreshToken })),
-  devLogin: (role) => unwrap(client.post('/auth/dev-login', { role })),
 };
 
 export const securityApi = {

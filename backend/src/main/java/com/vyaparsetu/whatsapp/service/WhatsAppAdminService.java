@@ -200,9 +200,6 @@ public class WhatsAppAdminService {
             phoneRepo.save(rp);
         }
 
-        // login OTP so the new retailer can activate the app account
-        otpService.generateAndSend(phone, Enums.OtpChannel.SMS, Enums.OtpPurpose.LOGIN, user.getId());
-
         req.setStatus(WhatsAppEnums.RequestStatus.APPROVED);
         requestRepo.save(req);
 
