@@ -34,5 +34,8 @@ management:
       show-details: never
 
 app:
+  features:
+    demo-login:
+      enabled: true
   storage:
     local-path: ${STORAGE_PATH:/tmp/vyaparsetu/storage}
