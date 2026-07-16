@@ -83,7 +83,18 @@ public class CreditAdminService {
     public CreditView setStatus(Long retailerId, StatusRequest req) {
         ownedRetailer(retailerId);
         Long supplierId = userService.currentSupplierId();
-        creditService.setStatus(retailerId, supplierId, CreditAccount.Status.valueOf(req.status()));
+        if (req == null || req.status() == null || req.status().isBlank()) {
+            throw new BusinessException("INVALID_CREDIT_STATUS", HttpStatus.BAD_REQUEST,
+                    "Credit status is required");
+        }
+        CreditAccount.Status status;
+        try {
+            status = CreditAccount.Status.valueOf(req.status().trim().toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            throw new BusinessException("INVALID_CREDIT_STATUS", HttpStatus.BAD_REQUEST,
+                    "Credit status must be ACTIVE or SUSPENDED");
+        }
+        creditService.setStatus(retailerId, supplierId, status);
         return get(retailerId);
     }
 }

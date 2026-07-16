@@ -82,7 +82,7 @@ public class WhatsAppAdminService {
         });
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public WhatsAppDtos.SettingsResponse getSettings() {
         return WhatsAppDtos.SettingsResponse.from(settingsFor(userService.currentSupplierId()));
     }

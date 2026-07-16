@@ -58,7 +58,7 @@ public class PolicyService {
         });
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public PolicyView get() {
         return PolicyView.from(policyFor(userService.currentSupplierId()));
     }
