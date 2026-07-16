@@ -6,6 +6,12 @@ public record AuthTokenResponse(
         String accessToken,
         String refreshToken,
         long expiresInSeconds,
-        UserResponse user
+        UserResponse user,
+        String nextStep,
+        String challengeToken
 ) {
+    public static AuthTokenResponse authenticated(
+            String accessToken, String refreshToken, long expiresInSeconds, UserResponse user) {
+        return new AuthTokenResponse(accessToken, refreshToken, expiresInSeconds, user, "AUTHENTICATED", null);
+    }
 }

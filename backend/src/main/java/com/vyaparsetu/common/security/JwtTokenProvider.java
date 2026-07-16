@@ -26,7 +26,8 @@ public class JwtTokenProvider {
         this.accessTtlMinutes = props.getSecurity().getJwt().getAccessTokenTtlMinutes();
     }
 
-    public String generateAccessToken(Long userId, String uuid, String phone, Set<String> roles) {
+    public String generateAccessToken(Long userId, String uuid, String phone, Set<String> roles,
+                                      Instant authenticatedAt, String authMethod) {
         Instant now = Instant.now();
         Instant exp = now.plus(accessTtlMinutes, ChronoUnit.MINUTES);
         return Jwts.builder()
@@ -34,6 +35,8 @@ public class JwtTokenProvider {
                 .claim("uuid", uuid)
                 .claim("phone", phone)
                 .claim("roles", String.join(",", roles))
+                .claim("auth_time", authenticatedAt.getEpochSecond())
+                .claim("amr", authMethod)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(exp))
                 .signWith(key)
@@ -50,11 +53,16 @@ public class JwtTokenProvider {
         Set<String> roles = (rolesStr == null || rolesStr.isBlank())
                 ? Set.of()
                 : List.of(rolesStr.split(",")).stream().collect(Collectors.toSet());
+        Object authTimeClaim = claims.get("auth_time");
+        Instant authenticatedAt = authTimeClaim instanceof Number number
+                ? Instant.ofEpochSecond(number.longValue()) : null;
         return new AppPrincipal(
                 Long.valueOf(claims.getSubject()),
                 claims.get("uuid", String.class),
                 claims.get("phone", String.class),
-                roles
+                roles,
+                authenticatedAt,
+                claims.get("amr", String.class)
         );
     }
 }

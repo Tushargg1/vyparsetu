@@ -25,6 +25,12 @@ public class RefreshToken {
     @Column(name = "device_info")
     private String deviceInfo;
 
+    @Column(name = "authenticated_at")
+    private Instant authenticatedAt;
+
+    @Column(name = "auth_method")
+    private String authMethod;
+
     @Column(name = "expires_at", nullable = false)
     private Instant expiresAt;
 

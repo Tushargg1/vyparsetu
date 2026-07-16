@@ -4,8 +4,22 @@ export const authApi = {
   register: (body) => unwrap(client.post('/auth/register', body)),
   sendOtp: (body) => unwrap(client.post('/auth/otp/send', body)),
   verifyOtp: (body) => unwrap(client.post('/auth/otp/verify', body)),
+  totpOptions: (body) => unwrap(client.post('/auth/totp/options', body)),
+  passkeyOptions: (body) => unwrap(client.post('/auth/passkeys/options', body)),
+  verifyPasskey: (body) => unwrap(client.post('/auth/passkeys/verify', body)),
+  verifyTotp: (body) => unwrap(client.post('/auth/totp/verify', body)),
   logout: (refreshToken) => unwrap(client.post('/auth/logout', { refreshToken })),
   devLogin: (role) => unwrap(client.post('/auth/dev-login', { role })),
+};
+
+export const securityApi = {
+  status: () => unwrap(client.get('/users/me/security')),
+  passkeyOptions: () => unwrap(client.post('/users/me/security/passkeys/options')),
+  verifyPasskey: (body) => unwrap(client.post('/users/me/security/passkeys/verify', body)),
+  deletePasskey: (id) => unwrap(client.delete(`/users/me/security/passkeys/${encodeURIComponent(id)}`)),
+  setupTotp: () => unwrap(client.post('/users/me/security/totp/setup')),
+  confirmTotp: (body) => unwrap(client.post('/users/me/security/totp/confirm', body)),
+  disableTotp: (body) => unwrap(client.post('/users/me/security/totp/disable', body)),
 };
 
 export const adminApi = {

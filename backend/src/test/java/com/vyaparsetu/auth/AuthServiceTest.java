@@ -4,6 +4,7 @@ import com.vyaparsetu.auth.dto.RegisterRequest;
 import com.vyaparsetu.auth.repository.RefreshTokenRepository;
 import com.vyaparsetu.auth.service.AuthService;
 import com.vyaparsetu.auth.service.OtpService;
+import com.vyaparsetu.auth.service.TotpService;
 import com.vyaparsetu.common.config.AppProperties;
 import com.vyaparsetu.common.enums.RoleName;
 import com.vyaparsetu.common.exception.BaseException;
@@ -22,7 +23,7 @@ class AuthServiceTest {
     private AuthService newService(UserRepository userRepository) {
         return new AuthService(userRepository, mock(RoleRepository.class),
                 mock(RetailerRepository.class), mock(SupplierRepository.class),
-                mock(RefreshTokenRepository.class), mock(OtpService.class),
+                mock(RefreshTokenRepository.class), mock(OtpService.class), mock(TotpService.class),
                 mock(JwtTokenProvider.class), mock(PasswordEncoder.class), new AppProperties());
     }
 

@@ -2,6 +2,7 @@ package com.vyaparsetu.auth.controller;
 
 import com.vyaparsetu.auth.dto.*;
 import com.vyaparsetu.auth.service.AuthService;
+import com.vyaparsetu.auth.service.PasskeyService;
 import com.vyaparsetu.common.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -17,9 +18,11 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
+    private final PasskeyService passkeyService;
 
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, PasskeyService passkeyService) {
         this.authService = authService;
+        this.passkeyService = passkeyService;
     }
 
     @PostMapping("/register")
@@ -48,6 +51,36 @@ public class AuthController {
     public ApiResponse<AuthTokenResponse> refresh(@Valid @RequestBody RefreshRequest req,
                                                   HttpServletRequest http) {
         return ApiResponse.ok(authService.refresh(req, http.getHeader("User-Agent")));
+    }
+
+    @PostMapping("/totp/options")
+    @Operation(summary = "Start authenticator-app sign-in")
+    public ApiResponse<TotpChallengeResponse> totpOptions(
+            @Valid @RequestBody TotpOptionsRequest req) {
+        return ApiResponse.ok(authService.startTotpLogin(req));
+    }
+
+    @PostMapping("/totp/verify")
+    @Operation(summary = "Complete sign-in with an authenticator-app code")
+    public ApiResponse<AuthTokenResponse> verifyTotp(@Valid @RequestBody TotpLoginRequest req,
+                                                     HttpServletRequest http) {
+        return ApiResponse.ok(authService.verifyTotp(req, http.getHeader("User-Agent")));
+    }
+
+    @PostMapping("/passkeys/options")
+    @Operation(summary = "Start passkey authentication")
+    public ApiResponse<PasskeyOptionsResponse> passkeyOptions(
+            @Valid @RequestBody PasskeyOptionsRequest req) {
+        return ApiResponse.ok(passkeyService.startAuthentication(req.identifier()));
+    }
+
+    @PostMapping("/passkeys/verify")
+    @Operation(summary = "Verify a passkey and issue tokens")
+    public ApiResponse<AuthTokenResponse> verifyPasskey(@Valid @RequestBody PasskeyFinishRequest req,
+                                                        HttpServletRequest http) {
+        Long userId = passkeyService.finishAuthentication(req);
+        return ApiResponse.ok(authService.issueTokensAfterStrongAuth(
+                userId, http.getHeader("User-Agent"), "PASSKEY"));
     }
 
     @PostMapping("/logout")

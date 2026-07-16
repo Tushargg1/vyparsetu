@@ -34,6 +34,7 @@ public class AuthService {
     private final SupplierRepository supplierRepository;
     private final RefreshTokenRepository refreshTokenRepository;
     private final OtpService otpService;
+    private final TotpService totpService;
     private final JwtTokenProvider tokenProvider;
     private final PasswordEncoder encoder;
     private final AppProperties props;
@@ -42,13 +43,15 @@ public class AuthService {
     public AuthService(UserRepository userRepository, RoleRepository roleRepository,
                        RetailerRepository retailerRepository, SupplierRepository supplierRepository,
                        RefreshTokenRepository refreshTokenRepository, OtpService otpService,
-                       JwtTokenProvider tokenProvider, PasswordEncoder encoder, AppProperties props) {
+                       TotpService totpService, JwtTokenProvider tokenProvider,
+                       PasswordEncoder encoder, AppProperties props) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.retailerRepository = retailerRepository;
         this.supplierRepository = supplierRepository;
         this.refreshTokenRepository = refreshTokenRepository;
         this.otpService = otpService;
+        this.totpService = totpService;
         this.tokenProvider = tokenProvider;
         this.encoder = encoder;
         this.props = props;
@@ -175,8 +178,34 @@ public class AuthService {
             user.setEmailVerified(true);
         }
         userRepository.save(user);
+        return issueTokens(user, deviceInfo, Instant.now(), "OTP");
+    }
 
-        return issueTokens(user, deviceInfo);
+    @Transactional
+    public TotpChallengeResponse startTotpLogin(TotpOptionsRequest req) {
+        User user = userRepository.findByPhone(req.identifier())
+                .or(() -> userRepository.findByEmail(req.identifier()))
+                .filter(value -> value.getStatus() == Enums.UserStatus.ACTIVE)
+                .filter(value -> totpService.isEnabled(value.getId()))
+                .orElseThrow(() -> new BusinessException("TOTP_UNAVAILABLE", HttpStatus.BAD_REQUEST,
+                        "Authenticator sign-in is not available for this account"));
+        return new TotpChallengeResponse(totpService.createLoginChallenge(user.getId()));
+    }
+
+    @Transactional
+    public AuthTokenResponse verifyTotp(TotpLoginRequest req, String deviceInfo) {
+        return issueTokensAfterStrongAuth(
+                totpService.verifyLogin(req.challengeToken(), req.code()), deviceInfo, "TOTP");
+    }
+
+    @Transactional
+    public AuthTokenResponse issueTokensAfterStrongAuth(Long userId, String deviceInfo, String method) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", userId));
+        if (user.getStatus() != Enums.UserStatus.ACTIVE) {
+            throw new BusinessException("ACCOUNT_NOT_ACTIVE", HttpStatus.FORBIDDEN, "Account is not active");
+        }
+        return issueTokens(user, deviceInfo, Instant.now(), method);
     }
 
     @Transactional
@@ -197,7 +226,10 @@ public class AuthService {
         if (user.getStatus() != Enums.UserStatus.ACTIVE) {
             throw new BusinessException("ACCOUNT_NOT_ACTIVE", HttpStatus.FORBIDDEN, "Account is not active");
         }
-        return issueTokens(user, deviceInfo);
+        Instant authenticatedAt = stored.getAuthenticatedAt() != null
+                ? stored.getAuthenticatedAt() : Instant.EPOCH;
+        String authMethod = stored.getAuthMethod() != null ? stored.getAuthMethod() : "LEGACY";
+        return issueTokens(user, deviceInfo, authenticatedAt, authMethod);
     }
 
     @Transactional
@@ -212,24 +244,28 @@ public class AuthService {
     /** Issues access + refresh tokens for an already-resolved user (used by dev login). */
     @Transactional
     public AuthTokenResponse issueTokensForUser(User user) {
-        return issueTokens(user, "dev-login");
+        return issueTokens(user, "dev-login", Instant.now(), "DEV");
     }
 
-    private AuthTokenResponse issueTokens(User user, String deviceInfo) {
+    private AuthTokenResponse issueTokens(User user, String deviceInfo,
+                                          Instant authenticatedAt, String authMethod) {
         Set<String> roles = user.getRoles().stream()
                 .map(r -> r.getName().name()).collect(Collectors.toSet());
-        String access = tokenProvider.generateAccessToken(user.getId(), user.getUuid(), user.getPhone(), roles);
+        String access = tokenProvider.generateAccessToken(
+                user.getId(), user.getUuid(), user.getPhone(), roles, authenticatedAt, authMethod);
 
         String rawRefresh = generateRefreshToken();
         RefreshToken rt = new RefreshToken();
         rt.setUserId(user.getId());
         rt.setTokenHash(sha256(rawRefresh));
         rt.setDeviceInfo(deviceInfo);
+        rt.setAuthenticatedAt(authenticatedAt);
+        rt.setAuthMethod(authMethod);
         rt.setExpiresAt(Instant.now().plus(props.getSecurity().getJwt().getRefreshTokenTtlDays(), ChronoUnit.DAYS));
         refreshTokenRepository.save(rt);
 
         long expiresIn = props.getSecurity().getJwt().getAccessTokenTtlMinutes() * 60;
-        return new AuthTokenResponse(access, rawRefresh, expiresIn, UserResponse.from(user));
+        return AuthTokenResponse.authenticated(access, rawRefresh, expiresIn, UserResponse.from(user));
     }
 
     private User findByIdentifier(String identifier) {

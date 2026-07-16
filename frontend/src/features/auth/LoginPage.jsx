@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authApi } from '../../lib/api';
+import { getPasskey, isWebAuthnSupported } from '../../lib/webauthn';
 import { useAuthStore } from '../../stores/authStore';
+import Button from '../../components/Button';
 import Icon from '../../components/Icon';
 
 const ROLES = [
@@ -22,6 +24,8 @@ export default function LoginPage() {
   const [role, setRole] = useState('RETAILER');
   const [form, setForm] = useState({ phone: '', name: '', shopName: '', businessName: '', supplierType: 'DISTRIBUTOR', inviteCode: '' });
   const [otp, setOtp] = useState('');
+  const [totpCode, setTotpCode] = useState('');
+  const [challengeToken, setChallengeToken] = useState('');
   const [purpose, setPurpose] = useState('LOGIN');
   const [step, setStep] = useState('details');
   const [error, setError] = useState('');
@@ -66,15 +70,80 @@ export default function LoginPage() {
     }
   };
 
+  const finishAuthentication = (res) => {
+    if (res.nextStep !== 'AUTHENTICATED' || !res.accessToken || !res.user) {
+      throw new Error('Sign-in could not be completed. Please try again.');
+    }
+    setChallengeToken('');
+    setTotpCode('');
+    setAuth({ accessToken: res.accessToken, refreshToken: res.refreshToken, user: res.user });
+    navigate(homeFor(res.user.roles || []));
+  };
+
+  const authError = (e, fallback) => {
+    if (e?.name === 'NotAllowedError') return 'The passkey request was cancelled or timed out.';
+    return e.response?.data?.error?.message || e.message || fallback;
+  };
+
   const verify = async () => {
     setError('');
     setLoading(true);
     try {
       const res = await authApi.verifyOtp({ identifier: form.phone, code: otp, purpose });
-      setAuth({ accessToken: res.accessToken, refreshToken: res.refreshToken, user: res.user });
-      navigate(homeFor(res.user.roles || []));
+      finishAuthentication(res);
     } catch (e) {
-      setError(e.response?.data?.error?.message || 'Invalid OTP');
+      setError(authError(e, 'Invalid OTP'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const signInWithPasskey = async () => {
+    setError('');
+    if (!isWebAuthnSupported()) {
+      setError('Passkeys are not supported in this browser or connection.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const ceremony = await authApi.passkeyOptions({ identifier: form.phone });
+      const credential = await getPasskey(ceremony.options);
+      const res = await authApi.verifyPasskey({ ceremonyId: ceremony.ceremonyId, credential });
+      finishAuthentication(res);
+    } catch (e) {
+      setError(authError(e, 'Could not sign in with this passkey.'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const startTotpSignIn = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      const result = await authApi.totpOptions({ identifier: form.phone });
+      setChallengeToken(result.challengeToken);
+      setTotpCode('');
+      setStep('totp');
+    } catch (e) {
+      setError(authError(e, 'Authenticator sign-in is not available for this account.'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const verifyTotp = async () => {
+    setError('');
+    if (!/^\d{6}$/.test(totpCode)) {
+      setError('Enter the 6-digit code from your authenticator app.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await authApi.verifyTotp({ challengeToken, code: totpCode });
+      finishAuthentication(res);
+    } catch (e) {
+      setError(authError(e, 'Invalid authenticator code.'));
     } finally {
       setLoading(false);
     }
@@ -208,6 +277,33 @@ export default function LoginPage() {
                 <span>Send OTP</span>
                 <Icon name="arrow_forward" className="text-[20px]" />
               </button>
+              {/^[6-9]\d{9}$/.test(form.phone) && (
+                <>
+                  <div className="flex items-center gap-sm text-label-sm text-on-surface-variant" aria-hidden="true">
+                    <span className="h-px flex-1 bg-outline-variant" />or<span className="h-px flex-1 bg-outline-variant" />
+                  </div>
+                  <Button
+                    variant="secondary"
+                    size="lg"
+                    className="w-full"
+                    leadingIcon="passkey"
+                    loading={loading}
+                    onClick={signInWithPasskey}
+                  >
+                    Sign in with passkey
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="lg"
+                    className="w-full"
+                    leadingIcon="phonelink_lock"
+                    loading={loading}
+                    onClick={startTotpSignIn}
+                  >
+                    Sign in with authenticator
+                  </Button>
+                </>
+              )}
             </div>
 
             {import.meta.env.DEV && (
@@ -221,7 +317,7 @@ export default function LoginPage() {
               </div>
             )}
           </>
-        ) : (
+        ) : step === 'otp' ? (
           <div className="flex flex-col gap-md">
             <h2 className="text-headline-md font-semibold text-on-surface">Enter your verification code</h2>
             <p className="text-label-sm text-on-surface-variant">Sent to +91 {form.phone} (check the backend console in dev)</p>
@@ -236,6 +332,35 @@ export default function LoginPage() {
               Verify & Continue
             </button>
             <button onClick={() => setStep('details')} className="min-h-11 rounded-xl text-secondary text-label-md font-semibold hover:bg-secondary-fixed/40">Change details</button>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-md">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-secondary-fixed text-secondary">
+              <Icon name="phonelink_lock" />
+            </div>
+            <h2 className="text-headline-md font-semibold text-on-surface">Authenticator verification</h2>
+            <p className="text-label-sm text-on-surface-variant">Enter the 6-digit code from your authenticator app to finish signing in.</p>
+            <input
+              className="ui-input py-md text-center text-headline-md tracking-widest"
+              aria-label="Authenticator code"
+              placeholder="······"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              maxLength={6}
+              value={totpCode}
+              onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              onKeyDown={(e) => { if (e.key === 'Enter') verifyTotp(); }}
+            />
+            <Button size="lg" className="w-full" loading={loading} onClick={verifyTotp}>
+              Verify & Continue
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full"
+              onClick={() => { setChallengeToken(''); setTotpCode(''); setStep('details'); }}
+            >
+              Start over
+            </Button>
           </div>
         )}
           </div>

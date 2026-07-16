@@ -10,6 +10,11 @@ logging:
     com.vyaparsetu: DEBUG
 
 app:
+  security:
+    webauthn:
+      rp-id: localhost
+      origins:
+        - http://localhost:5173
   features:
     whatsapp:
       enabled: true

@@ -4,6 +4,7 @@ import { distributorApi, retailerApi } from '../../lib/api';
 import { useAuthStore } from '../../stores/authStore';
 import Icon from '../../components/Icon';
 import PageHeader from '../../components/PageHeader';
+import SecurityMethods from '../../components/SecurityMethods';
 import { LoadingState } from '../../components/StatePanel';
 
 const EMPTY = {
@@ -144,6 +145,8 @@ export default function ProfilePage() {
           {msg && <span className="text-label-md text-on-surface-variant">{msg}</span>}
         </div>
       </div>
+
+      <SecurityMethods />
     </div>
   );
 }

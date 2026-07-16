@@ -59,11 +59,17 @@ public class AppProperties {
     public static class Security {
         private Jwt jwt = new Jwt();
         private Otp otp = new Otp();
+        private Totp totp = new Totp();
+        private WebAuthn webauthn = new WebAuthn();
         private Cors cors = new Cors();
         public Jwt getJwt() { return jwt; }
         public void setJwt(Jwt jwt) { this.jwt = jwt; }
         public Otp getOtp() { return otp; }
         public void setOtp(Otp otp) { this.otp = otp; }
+        public Totp getTotp() { return totp; }
+        public void setTotp(Totp totp) { this.totp = totp; }
+        public WebAuthn getWebauthn() { return webauthn; }
+        public void setWebauthn(WebAuthn webauthn) { this.webauthn = webauthn; }
         public Cors getCors() { return cors; }
         public void setCors(Cors cors) { this.cors = cors; }
     }
@@ -100,6 +106,33 @@ public class AppProperties {
         public void setMaxAttempts(int maxAttempts) { this.maxAttempts = maxAttempts; }
         public long getResendCooldownSeconds() { return resendCooldownSeconds; }
         public void setResendCooldownSeconds(long v) { this.resendCooldownSeconds = v; }
+    }
+
+    public static class Totp {
+        private String issuer = "VyaparMantra";
+        private String encryptionKey = "";
+        private long challengeTtlMinutes = 5;
+        public String getIssuer() { return issuer; }
+        public void setIssuer(String issuer) { this.issuer = issuer; }
+        public String getEncryptionKey() { return encryptionKey; }
+        public void setEncryptionKey(String encryptionKey) { this.encryptionKey = encryptionKey; }
+        public long getChallengeTtlMinutes() { return challengeTtlMinutes; }
+        public void setChallengeTtlMinutes(long value) { this.challengeTtlMinutes = value; }
+    }
+
+    public static class WebAuthn {
+        private String rpId = "vyparsetu.vercel.app";
+        private String rpName = "VyaparMantra";
+        private java.util.List<String> origins = new java.util.ArrayList<>(java.util.List.of("http://localhost:5173"));
+        private long ceremonyTtlMinutes = 5;
+        public String getRpId() { return rpId; }
+        public void setRpId(String rpId) { this.rpId = rpId; }
+        public String getRpName() { return rpName; }
+        public void setRpName(String rpName) { this.rpName = rpName; }
+        public java.util.List<String> getOrigins() { return origins; }
+        public void setOrigins(java.util.List<String> origins) { this.origins = origins; }
+        public long getCeremonyTtlMinutes() { return ceremonyTtlMinutes; }
+        public void setCeremonyTtlMinutes(long value) { this.ceremonyTtlMinutes = value; }
     }
 
     public static class Features {
